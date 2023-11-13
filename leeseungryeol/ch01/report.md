@@ -73,6 +73,7 @@ public class Audience {
     }
 }
 ```
+손님은 가방을 가지고 있을 것이다.</br>
 🔽티켓 부스 클래스 
 ```
 public class TicketOffice {
@@ -98,6 +99,8 @@ public class TicketOffice {
 }
 ```
 
+티켓 부스에서는 티켓들이 있고, 티켓이 없어질 때마다 돈이 들어온다.</br>
+
 🔽티켓 판매원 클래스
 ```
 public class TicketSeller {
@@ -113,6 +116,8 @@ public class TicketSeller {
 }
 ```
 
+티켓 판매원은 티켓 부스에 있다.</br>
+
 🔽극장 클래스
 ```
 public class Theater {
@@ -124,15 +129,21 @@ public class Theater {
 
     public void enter(Audience audience) {
         if (audience.getBag().hasInvitation()) {
-            Ticket ticket = ticketSeller.gTicketOffice().gTicket();
+            Ticket ticket = ticketSeller.getTicketOffice().getTicket();
             audience.getBag().setTicket(ticket);
         } else {
-            Ticket ticket = ticketSeller.gTicketOffice().gTicket();
+            Ticket ticket = ticketSeller.getTicketOffice().getTicket();
             audience.getBag().minusAmount(ticket.getFee());
-            ticketSeller.gTicketOffice().plusAmount(ticket.getFee());
+            ticketSeller.getTicketOffice().plusAmount(ticket.getFee());
             audience.getBag().setTicket(ticket);
         }
     }
 }
 
 ```
+극장에 참가 시 가방에 초대장이 있다면,</br>
+티켓 부스에 가서 티켓을 바꾼다.</br>
+그 후, 가방에 티켓을 넣는다.</br>
+만약 아니라면 티켓을 구매 한다.</br>
+유저 가방의 돈은 줄어들고, 티켓 부스의 돈은 늘어난다.</br>
+그 후, 가방에 티켓을 넣는다.</br>
