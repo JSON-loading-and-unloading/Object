@@ -329,6 +329,182 @@ Auduence와 TicketSeller는 자신이 가지고 있는 소지품을 스스로 �
 ❗훌륭한 객체지향 설계의 핵심은 캡슐화를 이용해 의존성을 적절히 관리함으로써 객체 사이의 결합도를 낮추는 것이다.❗</br>
 
 
+<h3>책임의 이동</h3>
+
+
+![KakaoTalk_20231115_004027834_01 (1)](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/5eb4390e-a490-467c-8ecf-adcb4e844fc5)
+
+이전 코드에는 Theater에 책임이 집중돼 있다.</br>
+변경된 코드를 보면 각각 역할에 대해 책임이 분산돼있다.</br>
+
+
+<h3>더 개선할 수 있다</h3>
+
+
+🔽손님 클래스  
+```
+public class Audience {
+    private Bag bag;
+
+    public Audience(Bag bag) {
+        this.bag = bag;
+    }
+
+    public Bag getBag() {
+        return bag;
+    }
+
+    public Long buy(Ticket ticket){
+       if (bag.hasInvitation()) {
+            bag.setTicket(ticket);
+            return 0L;
+        } else {
+            bag.setTicket(ticket);
+            bag.minusAmount(ticket.getFee());
+            return ticket.getFee();
+        }
+    }
+}
+```
+
+여기서 bag에 대해서도 결합도를 낮출 수 있다.
+
+🔽가방 클래스 
+```
+public class Bag {
+    private Long amount;
+    private Invitation invitation;
+    private Ticket ticket;
+
+    public Bag(long amount) { // 일반 손님일 경우 초대장 x, 돈 지불
+        this(null, amount);
+    }
+
+    pulbic Long hold(Ticket ticket){
+         if(hasInvitation()){
+              setTicket(ticket);
+              return 0L;
+         }else{
+              setTicket(ticket);
+              minusAmount(ticket.getFee());
+              return ticket.getFee();
+         }
+    }
+
+    public Bag(Invitation invitation, long amount) { // 이벤트 당점 손님일 경우 초대장
+        this.invitation = invitation;
+        this.amount = amount;
+    }
+
+    public boolean hasInvitation() {
+        return invitation != null; // 초대장 여부 확인
+    }
+
+    public boolean hasTicket() { // 티켓 여부 확인
+        return ticket != null;
+
+    }
+
+    public void setTicket(Ticket ticket) { // 티켓을 얻음
+        this.ticket = ticket;
+    }
+
+    public void minusAmount(Long amount) { // 일반 손님이 티켓 구매 시 줄어듬
+        this.amount -= amount;
+    }
+
+    public void plusAmount(Long amount) {
+        this.amount += amount;
+    }
+}
+```
+
+---------------------------------------------------------------------------------------------------------------------------------</br>
+변화된 Audience</br>
+
+
+🔽손님 클래스  
+```
+public class Audience {
+    private Bag bag;
+
+    public Long buy(Ticket ticket){
+       return bag.hold(ticket);
+   }
+
+
+}
+```
+
+----------------------------------------------------------------------------------------------------------------------------------</br>
+🔽티켓 판매원 클래스
+```
+public class TicketSeller {
+    private TicketOffice ticketOffice;
+
+    
+
+   public void sellTo(Audience audience){
+
+          ticketOffice.plusAmount(audience.buy(ticketOffice.getTicket()));  
+    }
+
+}
+```
+
+TicketSeller와 TicketOffice의 결합도를 낮출 수 있다.
+
+---------------------------------------------------------------------------------------------------------------------------------</br>
+변화된 TicketOffice</br>
+🔽티켓 부스 클래스 
+```
+public class TicketOffice {
+    private Long amount;
+    private List<Ticket> tickets = new ArrayList<>();
+
+    public void sellTicketTo(Audience audience){
+        plusAmount(audience.buy(getTicket()));
+    }
+
+    public Ticket geTicket() {
+        return tickets.remove(0);
+    }
+
+    public void minusAmount(Long amount) {
+        this.amount -= amount;
+    }
+
+    public void plusAmount(Long amount) {
+        this.amount += amount;
+    }
+}
+
+```
+
+🔽티켓 판매원 클래스
+```
+public class TicketSeller {
+    private TicketOffice ticketOffice;
+
+   public void sellTo(Audience audience){
+
+          ticketOffice.sellTicketTo(audience);  
+    }
+
+}
+```
+---------------------------------------------------------------------------------------------------------------------------------</br>
+
+
+![KakaoTalk_20231115_004027834](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/dd43f32e-02bf-42d2-aa88-8cba88139673)
+
+
+⛔하지만, 이 과정에서 새로운 의존성이 추가됐다.( TicketOffice와 Audience 사이에 의존성이 추가됐다.)⛔</br>
+
+이로 인해 자율성과 결합도를 선택할 것인지 선택해야 한다.</br>
+
+
+
 
  
 
