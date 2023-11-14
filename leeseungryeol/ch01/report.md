@@ -151,9 +151,9 @@ public class Theater {
 
 <h3>자율성을 높이자</h3>
 
-문제점 :  Theater가 관람객의 가방과 판매원의 매표소에 직접 접근함 
-원일 => 결합도가 높은 
-해결 => 캡슐화로 해결
+문제점 :  Theater가 관람객의 가방과 판매원의 매표소에 직접 접근함  </br>
+원일 => 결합도가 높은  </br>
+해결 => 캡슐화로 해결 </br>
 
 <h5>1</h5>
 🔽극장 클래스
@@ -215,13 +215,13 @@ public class TicketSeller {
 ```
 
 
-이로 인해 ticketOffice에 대한 접근은 오직 TicketSeller안에만 존재하게 된다. 
+이로 인해 ticketOffice에 대한 접근은 오직 TicketSeller안에만 존재하게 된다.  </br>
 ![KakaoTalk_20231114_122219512](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/b2e10f0d-db65-4ad6-bead-6ee716d50854)
 
 
 
 
-※Theater에서 TicketOffice로의 의존성이 제거됐다.
+※Theater에서 TicketOffice로의 의존성이 제거됐다. </br>
 
 <h5>2</h5>
 
@@ -260,7 +260,7 @@ public class TicketSeller {
 }
 ```
 
-현재 TicketSeller가 Audience의 가방을 직접 열어본다. => 결합도 제거 필요
+현재 TicketSeller가 Audience의 가방을 직접 열어본다. => 결합도 제거 필요 </br>
 
 
 
@@ -303,9 +303,31 @@ TicketSeller와 Audience 사이의 결합도가 낮아졌다.
 
 <h3>무엇이 개선됐는가?</h3>
 
-Auduence와 TicketSeller는 자신이 가지고 있는 소지품을 스스로 관리한다.
+Auduence와 TicketSeller는 자신이 가지고 있는 소지품을 스스로 관리한다. </br>
 
-중요한 점은 결합도를 낮추므로써 Audience나 TicketSeller의 내부 구현을 변경하더라도 Theater를 함께 변경할 필요가 없어졌다.
+중요한 점은 결합도를 낮추므로써 Audience나 TicketSeller의 내부 구현을 변경하더라도 Theater를 함께 변경할 필요가 없어졌다. </br>
+
+
+
+<h3>캡슐화와 응집도</h3>
+
+핵심은 객체 내부의 상태를 캡슐화하고 객체 간에 오직 메시지를 통해서만 상호작용하도록 만드는 것이다. </br>
+※Theater는 TocketSeller의 내부에 대해서는 전혀 알지 못한다. 단지 TocketSeller가 sellTo 메시지를 이해하고 응답할 수 있다는 사실만 알고 있을 뿐이다. </br>
+✅밀집하게 연관된 작업만을 수행하고 연관성 없는 작업은 다른 객체에게 위임하는 객체를 가리켜 응집도가 높다고 말한다. </br>
+=> 객체의 응집도를 높이기 위해서는 객체 스스로 자신의 데이터를 책임져야한다. </br>
+
+
+<h3>절차지향과 객체지향</h3>
+
+이전 코드인 Theater의 enter 메서드는 프로세스이며  Audience, TocketSeller, TicketOffice, Bag는 데이터다. </br>
+이처럼 프로세스와 데이터를 별도의 모듈에 위치시키는 방식을 절차적 프로그래밍이라고 부른다. </br>
+(Theater가 TicketSeller, TicketOffice, Audience, Bag에 모두 의존하고 있다.)</br>
+
+수정한 후의 코드에서는 데이터를 사용하는 프로세스가 데이터를 소유하고 있는 Audience와 TicketSeller 내부로 옮겨졌다. </br>
+이처럼 데이터와 프로세스가 동일한 모듈 내부에 위치하도록 프로그래밍하는 방식을 객체지향 프로그래밍이라고 한다.</br>
+
+❗훌륭한 객체지향 설계의 핵심은 캡슐화를 이용해 의존성을 적절히 관리함으로써 객체 사이의 결합도를 낮추는 것이다.❗</br>
+
 
 
  
