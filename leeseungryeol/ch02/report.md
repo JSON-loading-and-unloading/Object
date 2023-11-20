@@ -245,8 +245,9 @@ public interface DiscountCondition {
 ~~~
 인터페이스를 작성하여 오버라이딩을 통해 각 할인 조건의 클래스를 구현
 
+![KakaoTalk_Photo_2023-11-20-20-33-31](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/35d35f8d-636d-4c8d-a480-d551f3c0195d)
 
-
+플로우는 영화 예매 시 할인 정책, 조건 관계 다이어그램
 
 
 
