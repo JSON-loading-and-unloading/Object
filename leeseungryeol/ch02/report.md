@@ -113,8 +113,30 @@ public class Screening{
 🔽영화 클래스
 ```
 public class Money{
+ 
    public static final Money ZERO = Money.wons(0);
    private final BigDecimal amount;
+   private String title;
+   private Duration runningTime;
+   private Money fee;
+   private DiscountPolicy discountPolicy;
+
+   public Movie(String title, Duration runningTime, Money fee, DiscountPolicy discountPolicy){
+        this.title = title;
+        this.runningTime = runningTime;
+         this.fee = fee;
+        this.discountPolicy;
+   }
+
+   public Money getFee(){
+      return fee;
+}
+   public Money calculateMovieFee(Screening screening){           // 할인 요금 반환
+        return fee.minus(discountPolicy.calculateDiscountAmount(screening));
+
+}
+
+
    public static Money wons(long amount){
          return new Money(BigDecimal.valueOf(amount));
 }
@@ -186,5 +208,48 @@ Reservation클래스는 고객, 상영 정보, 예매 요금 , 인원 수를 속
 
 
 🔥객체지향 프로그램을 작성할 때는 먼저 협력의 관점에서 어떤 객체가 필요한지를 결정하고, 객체들의 공통 상태와 행위를 구현하기 위해 클래스를 작성한다.</br>
+
+🔽할인 클래스 
+~~~
+public abstract class DiscountPolicy{
+  private List<DiscountCondition> conditions = new ArrayList<>();
+
+  public DiscountPolicy( DiscountCondition ... conditions){
+     this.conditions = Arrays.asList(conditions);
+}
+
+public Money calculateDiscountAmount(Screening screening){
+
+   for(DiscountCondition each : conditions){
+       if(each.isStatisfiedBy(screening)){
+          return getDiscountAmount(screening);
+
+}
+}
+
+return Money.ZERO;
+}
+
+abstract protected Money getDiscountAmount(Screening screening);
+
+
+}
+~~~
+할인 정책이 두 가지인데 공통 코드를 줄이기 위해 추상 클래스를 통해 공통 코드를 작성함.
+
+🔽할인 조건 인터페이스
+~~~
+public interface DiscountCondition {
+    boolean isStisfiedBy(Screening screening);
+}
+~~~
+인터페이스를 작성하여 오버라이딩을 통해 각 할인 조건의 클래스를 구현
+
+
+
+
+
+
+
 
 
