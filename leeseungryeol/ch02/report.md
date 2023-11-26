@@ -250,6 +250,52 @@ public interface DiscountCondition {
 플로우는 영화 예매 시 할인 정책, 조건 관계 다이어그램
 
 
+<h2>상속과 다형성</h2>
+
+
+![KakaoTalk_20231126_224146873](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/56a1c160-5fe3-4cf7-b7a2-a50a94b1738d)
+
+
+코드를 보면 Movie가 AccountDiscountPolicy나 PercentDiscountPolicy에 의존하는 곳을 찾을 수 없다.</br>
+그러나 실행 시점에서는 Movie의 인스턴스는 AmountDiscountPolicy나 PercentDiscountPolicy의 인스턴스에 의존하게 된다.</br>
+=> 코드의 의존성과 실행시점의 의존성이 서로 다를 수 있다. 다시말해 클래스 사이의 의존성과 객체 사이의 의존성은 동일하지 않을 수 있다.</br>
+📌코드의 의존성과 실행 시점의 의존성이 다르면 다를수록 코드를 이해하기 어려워진다는 것이다. 코드를 이해하기 위해서는 코드뿐만 아니라 객체를 생성하고 연결하는 부분을 찾아야하기 때문이다. 반면 코드의 의존성과 실행시점의 의존성이 다르면 다를 수록 코드는 더 유연해지고 확장 가능해진다. 이와 같은 의존성의 양면성은 설계가 트레이드오프의 산물이라는 사실을 잘 보여준다.</br>
+
+📌설계가 유연해질수록 코드를 이해하고 디버깅하기는 점점 더 어려워진다는 사실을 기억하라. 반면 유연성을 역제하면 코드를 이해하고 디버깅하기는 쉬워지지만 재사용성과 확장 가능성은 낮아진다는 사실도 기억해라</br>
+
+
+<h2>상속과 인터페이스</h2>
+
+
+인터페이스는 객체가 이해할 수 있는 메세지의 목록을 정의한다는 것을 기억해라.
+=> 상속을 통해 자식 클래스는 자신의 인터페이스에 부모 클래스의 인터페이스를 포함하게 된다.
+
+
+![KakaoTalk_20231126_224146873_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/e38342dc-1554-498c-8ad1-7ea985d8d296)
+
+위 함수에서 Movie는 협력 객체가 calculateDiscountAmount라는 메시지를 이해할 수만 있다면 그 객체가 어떤 클래스의 인스턴스인지는 상관하지 않는다는 것이다.
+따라서, calculateDiscountAmount메시지를 수신할 수 있는 AmoountDiscountPolicy와 PercentDiscountPolicy 모두 DiscountPolicy를 대신해서 Movie와 협력할 수 있다.
+=> 자식 클래스는 상속을 통해 부모 클래스의 인터페이스를 물려받기 때문에 부모 클래스 대신 사용될 수 있다.
+
+
+
+
+<h2>다형성</h2>
+
+다형성은 객체지향 프로그램의 컴파일 시간 의존성과 실행 시간 의존성이 다를 수 있다는 사실을 기반으로 한다.
+프로그램을 작성할 때, movie클래스는 추상 클래스인 DiscountPolicy에 의존한다. 따라서, 컴파일 시간 의존성은 Movie에서 DiscountPolicy로 향한다.
+반면 실행 시점에 Movie의 인스턴스와 실제로 상호작용하는 객체는 AmountDiscountPolicy 또는 PercentDiscountPolicy의 인스턴스이다.
+
+다형성이란 동일한 메시지를 수신했을 때 객체의 타입에 따라 다르게 응답할 수 있는 능력을 의미한다.
+
+다형성 구현하는 방법
+
+메시지와 메서드를 실행 시점에 바인딩한다. 이를 지연 바인딩, 동적 바인딩이라고 한다.
+컴파일 시점에 실행될 함수나 프로시저를 결정하는 것을 초기 바인딩, 정적 바인딩이라고 한다.
+
+
+
+
 
 
 
