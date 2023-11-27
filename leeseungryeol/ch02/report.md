@@ -113,6 +113,7 @@ public class Screening{
 🔽영화 클래스
 ```
 public class Money{
+
  
    public static final Money ZERO = Money.wons(0);
    private final BigDecimal amount;
@@ -135,6 +136,7 @@ public class Money{
         return fee.minus(discountPolicy.calculateDiscountAmount(screening));
 
 }
+
 
 
    public static Money wons(long amount){
@@ -208,6 +210,7 @@ Reservation클래스는 고객, 상영 정보, 예매 요금 , 인원 수를 속
 
 
 🔥객체지향 프로그램을 작성할 때는 먼저 협력의 관점에서 어떤 객체가 필요한지를 결정하고, 객체들의 공통 상태와 행위를 구현하기 위해 클래스를 작성한다.</br>
+
 
 🔽할인 클래스 
 ~~~
@@ -397,6 +400,7 @@ public class NoneDiscountPolicy implements DiscountPolicy{
 
 Movie와 DiscountPolicy는 합성 관계로 연결돼 있고 DiscountPolicy와 AmountDiscountPolicy, PercentDiscountPolicy는 상속관계로 연결돼 있다.</br>
 이처럼 코드를 재사용하는 경우에는 상속보다 합성을 선호하는 것이 옳지만 다형성을 위해 인터페이스를 재사용하는 경우에는 상속과 함성을 함께 조합해서 사용할 수 밖에 없다.</br>
+
 
 
 
