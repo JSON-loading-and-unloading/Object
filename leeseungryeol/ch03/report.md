@@ -77,7 +77,8 @@ ex)</br>
 
       📌객체가 책임을 수행하게 하는 유일한 방법은 메시지를 전송하는 것이므로 책임을 할당한다는 것은 메시지의 이름을 결정하는 것과 같다.</br>
 
-      이미지
+     
+![KakaoTalk_Photo_2023-11-29-14-14-45 001jpeg](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/9c6e1ef0-b457-458d-8b18-fbafddb5c91e)
 
       위 이미지에서 '영화를 예매하라' 라는 액션을 명령받는다.</br></br>
 
@@ -121,4 +122,46 @@ ex)</br>
  1. 영화를 예매할 수 있는 적절한 역할이 무엇인가를 찾기
  2. 역할을 수행할 객체로 Screening 인스턴스를 선택
     이 둘로 나뉜다.</br>
+
+
+<h3>유연하고 재사용 가능한 협력</h3>
+
+역할이라는 개념을 고려하지 않고 객체에게 책임을 할당한다고 가정.</br>
+
+
+![KakaoTalk_Photo_2023-11-29-14-14-45 002jpeg](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/6c79cc0e-8ace-4969-85d4-73e622a5b7ee)
+
+할인 정책 중 AmountDiscountpolicy와 PercentDiscountpolicy 이 둘로 나뉜다.</br>
+하지만 이 방법으로 두 협력을 구현하면 코드가 중복되고 만다.</br></br>
+
+따라서 객체라는 존재를 지우고 할인 요금을 계산하라는 메시지에 응답할 수 있는 대표자를 생각한다면 두 협력을 하나로 통합할 수 있을 것이다.</br>
+
+
+![KakaoTalk_Photo_2023-11-29-14-14-45 003jpeg](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/5c47e618-69fa-41d9-9185-7f1d4244fd28)
+
+‼️역할이 두 종류의 구체적인 객체를 포괄하는 추상화라는 점에 주목하자</br>
+따라서, AmountDiscountpolicy와 PercentDiscountpolicy를 포괄할 수 있는 추상적인 이름을 부여해야 한다.
+
+</br></br>
+💯요점은 동일한 책임을 수행하는 역할을 기반으로 두 개의 협력을 하나로 통합할 수 있다는 것이다.</br>
+따라서 역할을 이용하면 불필요한 중복 코드를 제거할 수 있다.</br>
+
+<h3>객체 대 역할</h3>
+
+역할은 객체가 참여할 수 있는 일종의 슬롯이다. </br>
+따라서 유용하고 재사용 가능한 설계라는 문맥에서의 역할의 중요성은 아무리 강조해도 지나치지 않을 것이다.</br>
+
+한 종류의 객체만 협력을 참여하는 상황에서 역할이라는 개념을 고려하는 것이 유용할까?</br>
+=> 협력에 적합한 책임을 수행하는 대상이 한 종류라면 간단하게 객체로 간주한다. 만약 여러 종류의 객체들이 참여할 수 있다면 역할이라고 부르면 된다.</br>
+
+
+![KakaoTalk_Photo_2023-11-29-14-14-45 004jpeg](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/bb8d0064-825b-4fbf-b2d8-1e97418b03c1)
+
+협력은 역할들의 상호작용으로 구성되고, 협력을 구성하기 위해 역할에 적합한 객체가 선택되며, 객체는 클래스를 이용해 구현되고 생성된다.</br>
+
+
+
+
+
+
     
