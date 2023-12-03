@@ -291,5 +291,5 @@ public class ReservationAgency{
 
 
 ```
-
+위 클래스는 데이터 클래스들을 조합해서 영화 예매 절차를 구현하는 클래스이다.
 
