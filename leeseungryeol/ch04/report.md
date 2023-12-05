@@ -501,13 +501,46 @@ public class Screening {
 
 
   ReservationAgency
-  ```
-public class ReservationAgency {
-    public Reservation reserve(Screening screening, Customer customer, int audienceCount) {
-        Money fee = screening.calculateFee(audienceCount);
-        return new Reservation(customer, screening, fee, audienceCount);
-    }
-}
-  ```
+  
+~~~
+  
+    public class ReservationAgency {
+        public Reservation reserve(Screening screening, Customer customer, int audienceCount) {
+            Money fee = screening.calculateFee(audienceCount);
+            return new Reservation(customer, screening, fee, audienceCount);
+        }
+      }
+
+~~~
 
 - reserve가 Screening의 calculateFee함수를 호출
+
+<h2>하지만 여전히 부족하다</h2>
+
+두 번째 설계에서도 캡슐화를 위반한다.</br>
+
+<h3>캡슐화 위반</h3>
+
+1. DiscountCondition 클래스에서 isDiscountable함수 파라미터에서 해당 클래스의 속성을 인자로 받으며 속성을 노출한다.</br>
+2. Movie에서는 calculateAmountDiscountedFee, calculatePercentDiscountedFee, calulateNoneDiscountedFee 이 세 메서드로 할인 정책에 대해 노출을 하고 있다.</br></br>
+
+<h3>높은 결합도</h3>
+Movie와 DiscountCondition 사이의 결합도</br>
+ - DiscountCondition의 기간 할인 조건의 명칭이 PERIOD에서 다른 값으로 변경된다면 Movie를 수정해야 한다.</br>
+ - DiscountCondition의 종류가 추가되거나 삭제된다면 Movie안의 if ~ else 구문을 수정해야 한다.</br>
+ - 각 DiscountCondition의 만족 여부를 판단하는 데 필요한 정보가 변경된다면 movie의 isDiscountable메서드로 전달 된 파라미터를 변경해야한다.</br>
+
+
+<h3>낮은 응집도</h3>
+
+할인 조건의 종류를 변경하기 위해서는 DiscountCondition, Movie,그리고 Movie를 사용하는 Screening을 함께 수정해야 한다.</br>
+
+<h2>데이터 중심 설계의 문제점</h2>
+
+1. 데이터 중심 설계는 객체의 행동보다는 상태에 초점을 맞춘다.</br>
+   => 데이터 중심 설계는 너무 이른 시기에 데이터에 대해 고민하기 때문에 캡슐화에 실패하게 된다.</br>
+2. 데이터 중심 설계는 객체를 고립시킨 채 오퍼레이션을 정의하도록 만든다.</br>
+   => 데이터 중심 설계의 초점은 객체의 외부가 아니라 내부로 향한다.</br>
+   (협력이라는 문맥 안에서 필요한 책임을 결정하고 이를 수행할 적절한 객체를 결정하는 것이 가장 중요하다.</br>
+    올바른 객체지향 설계의 무게 중심은 항상 객체의 내부가 아니라 외부에 맞춰져 있어야 한다.)</br>
+
