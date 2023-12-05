@@ -356,3 +356,158 @@ ex)
 ![KakaoTalk_20231204_225756463_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/af2dfcff-6a82-4173-9cda-a83211048129)
 
 Rectangle에 책임을 주며 해결할 수 있다.</br>
+
+
+<h3>스스로 자신의 데이터를 책임지는 객체</h3>
+
+- 우리가 상태와 행동을 객체라는 하나의 단위로 묶는 이유는 객체의 스스로 자신의 상태를 처리할 수 있게 하기 위해서다.
+- 객체는 단순한 데이터 제공자가 아니다. 객체 내부에 저장되는 데이터보다 객체가 협력에 참여하면서 수행할 책임을 정의하는 오퍼레이션이 더 중요하다.
+
+  이 객체가 어떤 데이터를 포함해야 하는가?
+  
+  1. 이 객체가 어떤 데이터를 포함해야 하는가?
+  2. 이 객체가 데이터에 대해 수행해야 하는 오퍼레이션은 무엇인가?
+ 
+
+     
+     DiscountCondition
+     ```
+public class DiscountCondition {
+
+    public DiscountConditionType getType() {
+        return type;
+    }
+
+    public boolean isDiscountable(DayOfWeek dayOfWeek, LocalDateTime time) {
+        if (type != DiscountConditionType.PERIOD) {
+            throw new IllegalArgumentException();
+        }
+        return this.dayOfWeek.equals(dayOfWeek) &&
+                this.startTime.compareTo(time) <= 0 &&
+                this.endTime.compareTo(time) >= 0;
+    }
+
+    public boolean isDiscountable(int sequence) {
+        if (type != DiscountConditionType.SEQEUNCE) {
+            throw new IllegalArgumentException();
+        }
+        return this.sequence == sequence;
+    }
+
+}
+
+     ```
+- 할인 조건에 맞는 함수 구현
+
+   
+Movie
+
+```
+public class Movie {
+
+    private String title;
+    private Duration runningTime;
+    private Money fee;
+    private List<DiscountCondition> discountConditions;
+
+    private MovieType movieType;
+    private Money discountAmount;
+    private double discountPercent;
+
+    public MovieType getMovieType() {
+        return movieType;
+    }
+
+    public Money calculateAmountDiscountedFee() {
+        if (movieType != MovieType.AMOUNT_DISCOUNT) {
+            throw new IllegalArgumentException();
+        }
+        return fee.minus(discountAmount);
+    }
+
+    public Money calculatePercentDiscountdFee() {
+        if (movieType != MovieType.PERCENT_DISCOUNT) {
+            throw new IllegalArgumentException();
+        }
+        return fee.minus(fee.times(discountPercent));
+    }
+
+    public Money calculateNoneDiscountedFee() {
+        if (movieType != MovieType.NONE_DISCOUNT) {
+            throw new IllegalArgumentException();
+        }
+
+        return fee;
+    }
+
+    public boolean isDiscountable(LocalDateTime whenScreened, int sequence) {
+        for (DiscountCondition condition : discountConditions) {
+            if (condition.getType() = DiscountConditionType.PERIOD) {
+                if (condition.isDiscountable(whenScreened.getDayOfWeek(), whenScreened.toLocalTime())) {
+                    return true;
+                }
+            } else {
+                if (condition.isDiscountable(sequence)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+}
+```
+ - 영화 요금을 계산하는 오퍼레이션
+ - 할인 여부를 판단하는 오퍼레이션
+
+   
+Screening
+```
+public class Screening {
+
+    private Movie movie;
+    private int sequence;
+    private LocalDateTime whenScreened;
+
+    public Screening(Movie movie, int sequence, LocalDateTime whenScreened) {
+        this.movie = movie;
+        this.sequence = sequence;
+        this.whenScreened = whenScreened;
+    }
+
+    public Money calculateFee(int audienceCount) {
+        switch (movie.getMovieType()) {
+            case AMOUNT_DISCOUNT:
+                if (movie.isDiscountable(whenScreened, sequence)) {
+                    return movie.calculateAmountDiscountedFee().times(audienceCount);
+                }
+                break;
+
+            case PERCENT_DISCOUNT:
+                if (movie.isDiscountable(whenScreened, sequence)) {
+                    return movie.calculatePercentDiscountedFee().times(audienceCount);
+                }
+                break;
+            case NONE_DISCOUNT:
+                return movie.calculateNoneDiscountedFee().times(audienceCount);
+
+                return movie.calculateNoneDiscountedFee().times(audienceCount);
+        }
+    }
+}
+```
+
+- Movie의 isDiscountable메서드를 호출해 할인 가능한지 여부를 판단 후 요금 계산
+
+
+  ReservationAgency
+  ```
+public class ReservationAgency {
+    public Reservation reserve(Screening screening, Customer customer, int audienceCount) {
+        Money fee = screening.calculateFee(audienceCount);
+        return new Reservation(customer, screening, fee, audienceCount);
+    }
+}
+  ```
+
+- reserve가 Screening의 calculateFee함수를 호출
