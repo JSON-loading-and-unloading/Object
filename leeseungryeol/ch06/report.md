@@ -153,6 +153,41 @@ public interface DiscountCondition {
 1장 Theater코드 참고
 
 
+~~~
+
+audience.getBag().minusAmount(ticket.getFee());
+
+~~~
+
+위 코드는 Audience 내부에 포함된 Bag에게도 메시지를 전송</br></br>
+
+❗️인퍼페이스와 구현의 분리 원칙 위반</br></br>
+
+요청 순서</br>
+
+Theater -> TickerSeller -> Audience -> Bag</br></br>
+
+
+Theater 객체의 결합도를 낮추기 위해 각 객체의 책임을 분리</br>
+
+메소드 이름 또한 setTicket이 아닌</br>
+
+Theater -> TickerSeller</br>
+
+sellTo()</br></br>
+
+TickerSeller -> Audience</br>
+
+buy()</br></br>
+
+Audience -> Bag</br>
+
+hold()</br></br>
+
+각 책임에 맞는 메소드 이름을 사용</br>
+
+
+
 
 
 
