@@ -187,6 +187,173 @@ hold()</br></br>
 각 책임에 맞는 메소드 이름을 사용</br>
 
 
+<h2>원칙의 함정</h2>
+
+원칙이 현재 상황에 부적합하다고 판단된다면 과감하게 원칙을 무시하라.
+
+<h5>디미터 법칙은 하나의 도트를 강제하는 규칙이 아니다</h5>
+
+```
+InstScream.of(1,15,20,3,9)filter(x -> x > 10).disctinct().count();
+
+```
+
+이 코드는 미미터 법칙을 위반하지 않는다. 디미터 법칙은 결합도와 관련된 것이며, 이 결합도가 문제가 되는 것은 객체의 내부 구조가 외부로 노출되는 경우로 한정된다.</br></br>
+
+디미터 법칙을 적용하였을 경우</br>
+(묻는 것 외에는 다른 방법이 존재하지 않은 경우도 존재한다.)</br>
+컬렉션에 포함된 객체들은 처리하는 유일한 방법은 객체에게 물어보는것이다.</br>
+
+```
+for( Movie each : movies ){
+   total += each.getFee();
+
+}
+
+```
+
+물으려는 객체가 정말로 데이터인 경우도 있다.</br>
+객체는 내부 구조를 숨겨야 하므로 디미터 법칙을 따르는 것이 좋지만, 자료 구조라면 당연히 내부를 노출해야 하므로 디미터 법칙을 적용할 필요가 없다.</br></br>
+
+
+‼소프트웨어 설계에 법칙이란 존재하지 않는다는 것‼</br>
+
+
+<h2>명령-쿼리 분리 원칙</h2>
+
+루틴 : 어떤 절차를 묶어 호출 가능하도록 이름을 부여한 기능 모듈</br>
+프로시저 : 정해진 절차에 따라 내부의 상태를 변경하는 루틴의 한 종류</br>
+함수 : 어떤 절차에 따라 필요한 값을 계산해서 반환하는 루틴의 한 종류</br></br>
+
+ - 프로시저는 부수효과를 발생시킬 수 있지만 값을 반환할 수 없다.
+ - 함수는 값을 반환할 수 있지만 부수효과를 발생시킬 수 없다.
+
+
+명령 : 객체의 상태를 수정하는 오퍼레이션</br>
+쿼리 : 객체와 관련된 정보를 반환하는 오퍼레이션</br></br>
+
+개념적으로 명령은 프로시저와 동일하고 쿼리는 함수와 동일하다.</br>
+❗ 어떤 오퍼레이션도 명령인 동시에 쿼리여서는 안 된다.</br>
+
+
+Event 클래스</br>
+
+```
+public class Event {
+
+   private String subject;
+   private LocalDate from;
+   private Duration duration;
+
+   public Event(String subject, LocalDateTime from, Duration duration){
+
+           this.subject = subject;
+           this.from = from;
+           this.duration = duration;
+     }
+}
+
+
+```
+
+```
+
+public class RecurringSchedule{
+
+   private String subject;
+   private DayOfWeek dayOfWeek;
+   private LocalTime from;
+   private Duration duration;
+
+   public RecurringSchedule(String subject, DayOfWeek dayOfWeek, LocalTime from, Duration duration){
+
+           this.subject = subject;
+           this.dayOfWeek = dayOfWeek;
+           this.from = from;
+           this.duration = duration;
+     }
+}
+
+
+```
+
+
+```
+
+RecurringSchedule schedule = new RecurringSchedule("회의", DayOfWeek,WEDNESDAY, LocalTime.of(10, 30), Duration.ofMinutes(30));
+Event meeting = new Event("회의", LocalDateTime.of(2019, 5, 9, 10, 30), Duration.of(Minutes(30));
+
+assert meeting.isSatisfied(schedule) == false;
+assert meeting.isSatisfied(schedule) == true;
+
+```
+위 코드에서 매주 수요일 10시 30분부터 30분 동안 진행되는 회의에 대한 반복 일정을 표현하는 RecurringSchedule인스턴스를 생성한다.</br>
+다음으로 2019년 5월 9일 10시 30분부터 30분 동안 진행되는 회의를 위한 Event인스턴스인 meeting을 생성한다.</br>
+2019년 5월 9일은 목요일이므로 수요일이라는 반복 일정의 조건을 만족시키지 못한다.</br>
+따라서 false를 반환</br></br>
+
+하지만 여기서 RecurringSchedule을 이용해 isSatisfied를 두 번 호출했을 때 결과가 다르다.</br>
+
+```
+
+public class Event{
+  public boolean isSatisfied(RecurringSchedule schedule){
+      if(from.getDayOfWeek() != schedule.getDayOfWeek() ||
+           !from.toLocalTime().equals(schedule.getFrom() ||
+           !duration.equals(schedule.getDuartion()) {
+        reschedule(schedule);
+        return false;
+          }
+     return true;
+     }
+}
+
+
+```
+
+reschedule메서드를 호출하여 오류가 뜨는데,</br>
+이를 검출하기 어렵다.</br></br>
+
+사실 isSatisfied함수는 명령, 쿼리를 둘 다 적용한 상태이기 때문</br>
+
+따라서,</br>
+
+```
+public class Event{
+
+    private void reschedule(RecurringSchedule schedule){
+       from = LocalDateTime.of(from.toLocalDate().plusDays(daysDisctance(schedule)),
+                 schedule,getFrom());
+       duration = schedule.getDuration();
+
+     }
+
+  private long daysDisctance(RecurringSchedule schedule){
+
+       return schedule.getDayOfWeek().getValue() - from.getDayOfWeek().getValue();
+}
+}
+
+```
+
+위와 같이 수정할 수 있다.</br>
+=> 명령과 쿼리를 분리함으로써 명령형 언어의 틀 안에서 참조 투명성의 장점을 제한적이나마 누릴 수 있게 된다.</br>
+
+<h4>책임에 초점을 맞춰라</h4>
+
+디미터 법칙 :  협력이라는 컨텍스트 안에서 객체보다 메시지를 먼저 결정하면 두 객체 사이의 구조적인 결합도를 낮출 수 있다. 수신할 객체를 알지 못한 상태에서 메시지를 먼저 선택하기 때문에 객체의 내부 구조에 대해 고민할 필요가 없어진다.</br></br>
+
+묻지 말고 시켜라 : 메시지를 먼저 선택하면 묻지 말고 시켜라 스타일에 따라 협력을 구조화하게 된다. 클라이언트의 관점에서 메시지를 선택하기 때문에 필요한 정보를 물을 필요 없이 원하는 것을 표현한 메시지를 전송하면 된다.</br></br>
+
+
+
+의도를 드러내는 인터페이스 : 메시지를 먼저 선택한다는 것은 메시지를 전송하는 클라이언트의 관점에서 메시지의 이름을 정한다는 것이다. 당연히 그 이름에는 클라이언트가 무엇을 원하는지, 그 의도가 드러날 수밖에 없다.</br></br>
+
+
+
+명령-쿼리 분리 원칙 : 메시지를 먼저 선택한다는 것은 협력이라는 문맥 안에서 객체의 인터페이스에 관해 고민한다는 것을 의미한다. 객체가 단순히 어떤 일을 해야하는지 뿐만 아니라 협력 속에서 객체의 상태를 예측하고 이해하기 쉽게 만들기 위한 방법에 관해 고민하게 된다.</br></br>
+
+
 
 
 
