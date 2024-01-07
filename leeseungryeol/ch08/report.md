@@ -74,7 +74,8 @@ Screening이 가지고 있는 의존성이 Screening에 의존하고 있는 Peri
 컴파일타임 의존성에서는</br>
 
 
-이미지
+
+![KakaoTalk_20240108_020625309_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/0af16ba7-bb80-4f1a-b327-ee1ba900a90c)
 
 
 Movie가 AmountDiscountPolicy 등에 직접 의존하지 않고 이의 추상 클래스인 DiscounstPolicy에 의존한다. 이로 인해 각 정책에 대해서 상세하게 알지 못한다.</br></br>
@@ -83,12 +84,85 @@ Movie가 AmountDiscountPolicy 등에 직접 의존하지 않고 이의 추상 �
 
 런타임 의존성에서는</br>
 
-이미지
+![KakaoTalk_20240108_020625309_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/c31fb597-8258-43ed-9197-bb1c95f206e0)
+
 
 Movie가 AmountDiscountPolicy와 PercentDiscountPolicy에 각각 의존하게 된다.</br>
 이로 인해 전체적인 결합도를 높이고 새로운 할인 정책을 추가하기 어렵다.</br></br>
 
 컴파일 구조와 런타임 구조 사이의 거리가 멀면 멀수록 설계가 유연해지고 재사용 가능해진다.</br>
 
+<h3>컨텍스트 독립성</h3>
+
+클래스가 특정한 문맥에 강하게 결합될수록 다른 문맥에서 사용하기 더 어려워진다.</br>
+클래스가 사용될 특정한 문맥에 대해 최소한의 가정만으로 이뤄져 있다면 다른 문맥에서 재사용하기가 더 수월해진다.</br>
+=> 설계가 유연해지기 위해서는 가능한 한 자신이 실행될 컨텍스트에 대한 구체적인 정보를 최대한 적게 알아야한다.</br></br>
+
+<h3>의존성 해결하기</h3>
+
+의존성 해결 : 컴파일 타임 의존성을 실행 컨텍스트에 맞게 적절한 런타임 의존성으로 교체하는 것
+
+
+의존성 해결 방법
+- 객체를 생성하는 시점에 생성자를 통해 의존성 해결
+- 객체 생성 후 setter 메서드를 통해 의존성 해결
+- 메서드 실행 시 인자를 이용해 의존성 해결
+
+
+1. 객체를 생성하는 시점에 생성자를 통해 의존성 해결
+
+```
+
+Movie avatar = new Movie();
+avatar.caculateFee(); //discount policy가 아직 설정되지 않았기 때문에 NPE가 발생한다
+avatar.setDiscountPolicy(new AmountDiscountPolicy());
+
+
+```
+
+
+2. 객체 생성 후 setter 메서드를 통해 의존성 해결
+
+```
+Movie avatar = new Movie(new AmountDiscountPolicy());
+avatar.setDiscountPolicy(new PercentDiscountPolicy());
+
+```
+
+setter메서드를 이용하면 객체를 생성한 이유에도 의존하고 있는 대상을 변경할 수 있는 가능성을 열어 놓고 싶은 경우에 유용
+
+
+   ```
+
+Movie movie = new Movie(new AmountDiscountPolicy()); //1
+movie.setDiscountPolicy(new PercentDiscountPolicy()); //2
+
+
+   ```
+
+   완전 상태의 객체를 생성 후, 필요에 따라 setter 메서드를 이용해 의존 대상을 변경
+
+
+3. 메서드 실행 시 인자를 이용해 의존성 해결
+
+```
+   
+public class Movie{
+
+   public Money calculateMovieFee(Screening screening, DiscountPolicy discountPolicy){
+
+    return fee.minus(discountPolicy.calculateDiscountAmount(screening));
+
+   }
+
+}
+
+
+```
+
+협력 대상에 대해 지속적으로 의존 관계를 맺을 필요 없이 메서드가 실행되는 동안만 일시적으로 의존 관계가 존재해도 무방하거나, 메서드가 실행될 때마다 의존 대상이 매번 달라져야 하는 경우에 유용
+
+
+   
 
 
