@@ -163,6 +163,133 @@ public class Movie{
 협력 대상에 대해 지속적으로 의존 관계를 맺을 필요 없이 메서드가 실행되는 동안만 일시적으로 의존 관계가 존재해도 무방하거나, 메서드가 실행될 때마다 의존 대상이 매번 달라져야 하는 경우에 유용
 
 
-   
+<h2>유연한 설계</h2>
+
+<h3>의존성과 결합도</h3>
+
+```
+
+public class Movie {
+    private String title;
+    private Duration runningTime;
+    private Money fee;
+    private DiscountPolicy discountPolicy;
+
+    public Movie(String title, Duration runningTime, Money fee, PercentDiscountPolicy percentDiscountPolicy) {
+        this.title = title;
+        this.runningTime = runningTime;
+        this.fee = fee;
+        this.discountPolicy = discountPolicy;
+    }
+
+    public Money getFee() {
+        return fee;
+    }
+
+    public Money calculateMovieFee(Screening screening) {
+        return fee.minus(discountPolicy.calculateDiscountAmount(screening));
+    }
+}
+
+```
+
+위 코드에서 PercentDiscountPolicy라는 구체적인 클래스에 의존하게 만들었기 때문에 다른 종류의 할인 정책이 문맥에서 Movie를 재사용할 수 있는 가능성을 없애 버렸다.</br>
+
+해결 : 의존성을 바람직하게 만들기
+</br></br>
+추상 클래스 DiscountPolicy는 사용 </br>
+바람직한 의존성은 재사용성과 관련이 있다.</br>
+어떤 의존성이 다양한 환경에서 클래스를 재사용할 수 없도록 제한한다면 그 의존성은 바람직하지 못한 것이다.</br></br>
+
+바람직한 의존성이란 컨텍스트에 독립적인 의존성을 의미하며 다양한 환경에서 재사용될 수 있는 가능성을 열어놓는 의존성을 의미한다.</br></br>
+
+
+<h3>지식이 결합을 낳는다</h3>
+
+Movie 클래스가 추상 클래스인 DiscountPolicy 클래스에 의존하는 경우에는 구체적인 계산 방법은 알 필요가 없다.</br>
+따라서 Movie가 PercentDiscountPolicy에 의존하는 것보다 DiscountPolicy에 의존하는 경우 알아야 하는 지식의 양이 적기 때문에 결합도가 느슨해진다.</br>
+
+<h3>추상화에 의존하라</h3>
+
+추상화란 어떤 양상, 세부사항, 구조를 좀 더 명확하게 이해하기 위해 특정 절차나 물체를 의도적으로 생략하거나 감춤으로서 복잡도를 극복하는 방법이다.</br></br>
+
+DiscountPolicy클래스는 PercentDiscountPolicy클래스가 비율 할인 정책에 따라 할인 요금을 계산한다는 사실을 숨겨주기 때문에 PercentDiscountPolicy의 추상화다.</br>
+
+ - 구체 클래스 의존성
+ - 추상 클래스 의존성
+ - 인터페이스 의존성
+
+• 구체 클래스에 비해 추상 클래스는 메서드의 내부 구현과 자식 클래스의 종류에 대한 지식을 클라이언트에게 숨길 수 있다.</br>
+• 따라서, 클라이언트가 알아야 하는 지식의 양이 더 적기 때문에 구체 클래스보다 추상 클래스에 의존하는 결합도가 더 낮다.</br>
+• 인터페이스에 의존하면 상속 계층을 모르더라도 협력이 가능해진다.</br>
+• 인터페이스 의존성은 협력하는 객체가 어떤 메시지를 수신할 수 있는지에 대한 지식만을 남기기 때문에 추상 클래스 의존성보다 결합도가 낮다.</br>
+=> 결합도를 느슨하게 만들기 위해서는 구체적인 클래스보다 추상 클래스에, 추상 클래스보다 인터페이스에 의존하도록 만드는것이 더 효과적이다.</br>
+
+
+```
+
+public class Movie {
+    private String title;
+    private Duration runningTime;
+    private Money fee;
+    private DiscountPolicy discountPolicy;
+
+    public Movie(String title, Duration runningTime, Money fee) {
+        this.title = title;
+        this.runningTime = runningTime;
+        this.fee = fee;
+        this.discountPolicy = new AmountDiscountPolicy(..);
+    }
+
+    public Money getFee() {
+        return fee;
+    }
+
+    public Money calculateMovieFee(Screening screening) {
+        return fee.minus(discountPolicy.calculateDiscountAmount(screening));
+    }
+}
+
+
+```
+
+위 코드같은 경우 생성자 내부에서 인스턴스 변수를 생성하므로 결국 DiscountPolicy와 AmountDiscountPolicy 둘 다 결합을 하게 된다.
+
+```
+
+public class Movie {
+    private String title;
+    private Duration runningTime;
+    private Money fee;
+    private DiscountPolicy discountPolicy;
+
+    public Movie(String title, Duration runningTime, Money fee, DiscountPolicy discountPolicy) {
+        this.title = title;
+        this.runningTime = runningTime;
+        this.fee = fee;
+        this.discountPolicy = discountPolicy;
+    }
+
+    public Money getFee() {
+        return fee;
+    }
+
+    public Money calculateMovieFee(Screening screening) {
+        return fee.minus(discountPolicy.calculateDiscountAmount(screening));
+    }
+}
+
+
+```
+
+위 코드는 DiscountPolicy에 의존한다.
+setter 메서드를 사용하는 방식과 메서드 인자를 사용하는 방식의 경우에도 동일하다.
+모든 경우에 의존성은 명시적으로 퍼블릭 인터페이스에 노출된다. 이를 명시적인 의존성이라고 부른다.
+
+반면 이전 코드처럼 생성자에 인스턴스가 직접 생성되는 방식은 Movie가 DiscountPolicy에 의존한다는 사실을 감춘다.
+다시 말해 의존성이 퍼블릭 인터페이스에 표현되지 않는다. 이를 숨겨진 의존성이라고 부른다.
+
+❗커다란 문제는 의존성이 명시적이지 않으면 클래스를 다른 컨텍스트에서 재사용하기 위해 내부 구현을 직접 변경해야 한다.❗
+
 
 
