@@ -253,7 +253,7 @@ public class Movie {
 
 ```
 
-위 코드같은 경우 생성자 내부에서 인스턴스 변수를 생성하므로 결국 DiscountPolicy와 AmountDiscountPolicy 둘 다 결합을 하게 된다.
+위 코드같은 경우 생성자 내부에서 인스턴스 변수를 생성하므로 결국 DiscountPolicy와 AmountDiscountPolicy 둘 다 결합을 하게 된다.</br>
 
 ```
 
@@ -282,14 +282,79 @@ public class Movie {
 
 ```
 
-위 코드는 DiscountPolicy에 의존한다.
-setter 메서드를 사용하는 방식과 메서드 인자를 사용하는 방식의 경우에도 동일하다.
-모든 경우에 의존성은 명시적으로 퍼블릭 인터페이스에 노출된다. 이를 명시적인 의존성이라고 부른다.
+위 코드는 DiscountPolicy에 의존한다.</br>
+setter 메서드를 사용하는 방식과 메서드 인자를 사용하는 방식의 경우에도 동일하다.</br>
+모든 경우에 의존성은 명시적으로 퍼블릭 인터페이스에 노출된다. 이를 명시적인 의존성이라고 부른다.</br></br>
 
-반면 이전 코드처럼 생성자에 인스턴스가 직접 생성되는 방식은 Movie가 DiscountPolicy에 의존한다는 사실을 감춘다.
-다시 말해 의존성이 퍼블릭 인터페이스에 표현되지 않는다. 이를 숨겨진 의존성이라고 부른다.
+반면 이전 코드처럼 생성자에 인스턴스가 직접 생성되는 방식은 Movie가 DiscountPolicy에 의존한다는 사실을 감춘다.</br>
+다시 말해 의존성이 퍼블릭 인터페이스에 표현되지 않는다. 이를 숨겨진 의존성이라고 부른다.</br></br>
 
-❗커다란 문제는 의존성이 명시적이지 않으면 클래스를 다른 컨텍스트에서 재사용하기 위해 내부 구현을 직접 변경해야 한다.❗
+❗커다란 문제는 의존성이 명시적이지 않으면 클래스를 다른 컨텍스트에서 재사용하기 위해 내부 구현을 직접 변경해야 한다.❗</br>
+
+<h3>new는 해롭다</h3>
+
+대부분의 언어네서는 클래스의 인스턴스를 생성할 수 있는 new 연산자를 제공한다.</br>
+하지만 안타깝게도 new를 잘못 사용하면 클래스 사이의 결합도가 극단적으로 높아진다.</br></br>
+
+new가 해로운 이유</br>
+ - new 연산자를 사용하기 위해서는 구체 클래스의 이름을 직접 기술해야 한다. 따라서 new를 사용하는 클라이언트는 추상화가 아닌 구체 클래스에 의존할 수밖에 없기 때문에 결합도가 높아진다.
+ - new연산자는 생성하려는 구체 클래스뿐만 아니라 어떤 인자를 이용해 클래스의 생성자를 호출해야 하는지도 알아야 한다. 따라서 new를 사용하면 클라이언트가 알아야 하는 지식의 양이 늘어나기 때문에 결합도가 높아진다.</br>
+
+```
+
+public class Movie {
+    private String title;
+    private Duration runningTime;
+    private Money fee;
+    private DiscountPolicy discountPolicy;
+
+    public Movie(String title, Duration runningTime, Money fee) {
+
+       this.discountPolicy = new AmountDiscountPolicy( Money.wons(500),
+                        new SequenceCondition(1),
+                        new SequenceCondition(10),
+                        new PeriodCondition(DayOfWeek.MONDAY,
+                                       LocalTime.of(10,0), LocalTime.of(11,59)),
+                        new PeriodCondition(DayOfWeek.THURSDAY,
+                                       LocalTime.of(10,0), LocalTime.of(20,59)),
+
+    }
 
 
+}
 
+```
+
+위 코드에서 new를 사용할 경우 AmountDiscountPolicy의 생성자의 인자를 알아야하므로 더 강하게 결합됨.</br>
+또한, PeriodCondition,  SequenceCondition에도 의존하도록 만든다.</br></br>
+
+
+해결 : 인스턴스를  생성하는 로직과 생성된 인스턴스를 사용하는 로직을 분리하는 것</br>
+
+인스턴스를</br>
+1. 생성자의 인자로 전달
+2. setter 메서들 사용
+3. 실행 시에 메서드 인자로 전달
+
+```
+
+public class Movie {
+    private String title;
+    private Duration runningTime;
+    private Money fee;
+    private DiscountPolicy discountPolicy;
+
+    public Movie(String title, Duration runningTime, Money fee, DiscountPolicy discountPolicy) {
+        this.title = title;
+        this.runningTime = runningTime;
+        this.fee = fee;
+        this.discountPolicy = discountPolicy;
+    }
+
+
+```
+
+위처럼 생성자를 인자로 받으면 위와 같은 코드의 문제점이 사라진다.</br></br>
+
+
+※사용과 생성의 책임을 분리하고, 의존성을 생성자에 명시적으로 드러내고, 구체 클래스가 아닌 추상 클래스에 의존하게 함으로써 설계를 유연하게 만들 수 있다.
