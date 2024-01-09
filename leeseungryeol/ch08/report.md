@@ -357,4 +357,126 @@ public class Movie {
 위처럼 생성자를 인자로 받으면 위와 같은 코드의 문제점이 사라진다.</br></br>
 
 
-※사용과 생성의 책임을 분리하고, 의존성을 생성자에 명시적으로 드러내고, 구체 클래스가 아닌 추상 클래스에 의존하게 함으로써 설계를 유연하게 만들 수 있다.
+※사용과 생성의 책임을 분리하고, 의존성을 생성자에 명시적으로 드러내고, 구체 클래스가 아닌 추상 클래스에 의존하게 함으로써 설계를 유연하게 만들 수 있다.</br>
+
+
+<h3>가끔은 생성해도 무방하다</h3>
+
+클래스 안에서 객체의 인스턴스를 직접 생성하는 방식이 유용한 경우도 있다.</br>
+
+```
+
+public class Movie {
+    private String title;
+    private Duration runningTime;
+    private Money fee;
+    private DiscountPolicy discountPolicy;
+
+    public Movie(String title, Duration runningTime, Money fee){
+
+         this(title, runningTime, fee, AmountDiscountPolicy(..))
+
+}
+
+    public Movie(String title, Duration runningTime, Money fee, DiscountPolicy discountPolicy) {
+        this.title = title;
+        this.runningTime = runningTime;
+        this.fee = fee;
+        this.discountPolicy = discountPolicy;
+    }
+}
+
+
+```
+
+이 코드에서는 첫번째 생성자의 내부에서 두 번째 생성자를 호출한다.</br>
+=> 클라이언트는 대부분의 경우에 추가된 간략한 생성자를 통해 AmountDiscountPolicy의 인스턴스와 협력하면서도 컨텍스트에 적절한 DiscountPolicy의 인스턴스로 의존성을 교체할 수 있다.</br>
+
+
+```
+
+public class Movie {
+    private String title;
+    private Duration runningTime;
+    private Money fee;
+    private DiscountPolicy discountPolicy;
+
+    public Movie calculateMovieFee(Screening screening){
+           return calculateMovieFee(screening, new AmountDiscountPolicy(...)));
+     }
+
+    public Movie calculateMovieFee(Screening screening, DiscountPolicy discountPolicy){
+           return fee.minus(discountPolicy.calculateDiscountAmount(screening));
+     }
+
+
+}
+
+```
+
+위 방법은 메서드 오버로딩하는 경우에도 사용할 수 있다.</br>
+DiscountPolicy의 인스턴스를 인자로 받는 메서드와 기본값을 생성하는 메서드를 함께 사용한다면 클래스의 사용성을 향상시키면서 다양한 컨텍스트에서 유연하게 사용될 수 있는 여지를 제공할 수 있다.</br></br>
+
+=> 이 예제를 통해 트레이드오프 활동이라는 사실을 상기시킴.</br>
+
+
+<h3>표준 클래스에 대한 의존은 해롭지 않다</h3>
+
+jdk의 표준 컬렉션 라이브러리에 속하는 ArrayList의 경우에는 다음과 같이 생성한다.</br>
+
+```
+List<A> conditions = new ArrayList<>();
+
+```
+
+비록 클래스를 직접 생성하더라고 가능한 한 추상적인 타입을 사용하는 것이 확장성 측면에서 유리하다.</br>
+여기서 ArrayList 등와 같은 가장 추상적인 인터페이스 List를 선언하여 설계의 유연성을 높일 수 있다.</br>
+
+
+<H3>컨텍스트 확장하기</H3>
+
+1. 할인이 없을 경우
+2. 여러 개의 할인을 받을 경우
+</br>
+할인이 없을 경우</br>
+
+```
+
+public class NoneDiscountPolicy extends DiscountPolicy{
+
+   @override
+   protected Money getDiscountAmount(Screening screening){
+      return Money.ZERO;
+}
+
+}
+
+
+```
+
+DiscountPolicy를 상속받는 NondeDiscountPolicy 클래스를 만들어서 자식 클래스를 추가한다. Movie 변동 x
+</br></br>
+여러 개의 할인을 받을 경우</br>
+
+```
+
+public class OverlappedDiscountPolicy extends DiscountPolicy{
+
+   private List<DiscountPolicy> discountPolicies = new ArrayList();
+
+   public OverlappedDiscountPolicy( DiscountPolicy ... discountPolicies){
+
+      this.discountPolicies = Arrays.asList(discountPolicies);
+}
+
+
+}
+
+```
+
+여러 개의 할인을 받을 경우 OverlappedDiscountPolicy 클래스를 생성하여 할인 정책을 List로 받아 적용한다. Moive 변동 x</br></br>
+
+
+정리 : 설계를 유연하게 만들 수 있었던 이유는 Movie가 DiscountPolicy라는 추상화에 의존하고, 생성자를 통해 DiscountPolicy에 대한 의존성을 명시적으로 드러냈으며, new와 같이 구체 클래스를 직접적으로 다뤄야 하는 책임을 Movie 외부로 옮겼기 때문이다.</br>
+우리는 Movie가 의졶나는 추상화인 DiscountPolicy클래스에 자식 클래스를 추가함으로써 간단하게 Movie가 사용될 컨텍스트를 확장할 수 있었다</br>
+=> 결합도를 낮춤으로써 얻게 되는 컨텍스트의 확장이라는 개념이 유연하고 재사용 가능한 설계를 만드는 핵심이다.</br>
