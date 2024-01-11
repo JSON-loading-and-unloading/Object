@@ -16,7 +16,7 @@
 ※컴파일 타임 의존성 : 코드에서 드러나는 클래스들 사이의 관계</br>
 
 
-이미지
+![KakaoTalk_20240111_182950558](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/0f6b5f55-0339-4997-bc0c-b806ef1ea8fb)
 
 
 위 그림에서 알 수 있는 것처럼 중복 할인 정책을 구현하는 OverlapDiscountPolicy 클래스를 추가하더라도 Movie클래스는 여전히 DiscountPolicy 클래스에만 의존한다.</br>
@@ -110,7 +110,8 @@ Movie가 DiscountPolicy와 결합하기 때문에 기능이 추가되더라도 D
 <h2>생성 사용 분리</h2>
 
 
-이미지
+
+![KakaoTalk_20240111_182950558_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/f3c88cbf-2ef7-4ac0-89dc-e18a5e09633d)
 
 
 유연하고 재사용 가능한 설계를 원한다면 객체와 관련된 두 가지 책임을 서로 다른 객체에 분리해야 한다.</br>
@@ -141,7 +142,8 @@ public class Client {
 
 ```
 
-이미지
+
+![KakaoTalk_20240111_182950558_02](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/5f2dd28b-785a-4b8f-a42a-3136d2cf138f)
 
 
 
@@ -199,7 +201,8 @@ public class Factory {
 ```
 
 
-이미지
+![KakaoTalk_20240111_182950558_03](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/67e0b564-4d41-46df-95c8-cc7e8d50595a)
+
 
 
 Factory를 사용하면 Movie와 AountDiscountPolicy를 생성하는 책임 모두를 Factory로 이동할 수 있다. </br>
