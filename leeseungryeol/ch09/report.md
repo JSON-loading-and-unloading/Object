@@ -104,3 +104,57 @@ Movie가 DiscountPolicy와 결합하기 때문에 기능이 추가되더라도 D
 
 
 ❗변경에 의 한 파급 효과를 최대한 피하기 위해서는 변하는 것과 변하지 않는 것이 무엇인지를 이해하고 이를 추상화 목적으로 삼아야 한다.❗</br>
+
+
+
+<h2>생성 사용 분리</h2>
+
+
+이미지
+
+
+유연하고 재사용 가능한 설계를 원한다면 객체와 관련된 두 가지 책임을 서로 다른 객체에 분리해야 한다.</br>
+하나는 객체를 <strong>생성</strong>하는 것이고, 다른 하나는 <strong>객체</strong>를 사용하는 것이다.</br>
+=> 객체애 대한 생성과 사용을 분리해야 한다.</br></br>
+
+
+사용으로부터 생성을 분리하는 데 사용되는 가장 보편적인 방버</br>
+ - 객체를 생성할 책임을 클라이언트로 옮기는 것
+
+
+```
+
+
+public class Client {
+    public Money getAvatarFee() {
+        Movie avatar = new Movie("아바타",
+                Duration.ofMinutes(120),
+                Money.wons(10000),
+                new AmountDiscountPolicy(
+                    Money.wons(800),
+                    new SequenceCondition(1),
+                    new SequenceCondition(10)));
+        return avatar.getFee();
+    }
+}
+
+
+```
+
+이미지
+
+
+
+
+
+그림 9.4에서 Movie는 AmountDiscountPolicy에 대한 의존성 때문에 금액 할인 정책이라는 구체적인 컨텍스트에 묶여 있다. </br>
+반면 그림 9.5에서는 AmountDiscountPolicy의 인스턴스를 생성하는 책임을 클라이언트에게 맡김으로써 구체적인 컨텍스트와 관련된 정보는 클라이언트로 옮기고 </br>
+Movie는 오직 DiscountPolicy의 인스턴스를 사용하는 데만 주력하고 있다.</br></br>
+
+
+
+<h3>Factory 추가하기</h3>
+
+
+
+
