@@ -155,6 +155,84 @@ Movie는 오직 DiscountPolicy의 인스턴스를 사용하는 데만 주력하�
 
 <h3>Factory 추가하기</h3>
 
+Movie를 사용하는 Client도 특정한 컨텍스트에 묶이지 않기를 바란다면 </br> </br>
+
+각체 생성과 관련된 책임만 전담하는 별도의 객체를 추가하고 Client는 이 객체를 사용하도록 만들 수 있다. </br>
+생성과 사용을 분리하기 위해 객체 생성에 특화된 객체를 Factory라고 부른다. </br>
+
+
+```
+
+public class Client {
+    private Factory factory;
+
+    public Client(Factory factory) {
+        this.factory = factory;
+    }
+
+    public Money getAvatarFee() {
+        Movie avatar = factory.createAvatarMovie();
+        return avatar.getFee();
+    }
+}
+
+
+```
+
+
+
+```
+
+public class Factory {
+    public Movie createAvatarMovie() {
+        return new Movie("아바타",
+                Duration.ofMinutes(120),
+                Money.wons(10000),
+                new AmountDiscountPolicy(
+                    Money.wons(800),
+                    new SequenceCondition(1),
+                    new SequenceCondition(10)));
+    }
+}
+
+
+```
+
+
+이미지
+
+
+Factory를 사용하면 Movie와 AountDiscountPolicy를 생성하는 책임 모두를 Factory로 이동할 수 있다. </br>
+=> Client는 오직 사용과 관련된 책임만 지고 생성과 관련된 어떤 지식도 가지지 않을 수 있다. </br> </br>
+
+
+<h3>순수한 가공물에게 책임 할당하기</h3>
+
+
+전에 Factory를 추가한 이유는 순수하게 기술적인 결정이다. </br>
+전체적인 결합도를 낮추고 재사용성을 높이기 위해 도메인 객체를 할당돼 있던 객체 생성 책임을 도메인 개념과는 아무런 상관이 없는 객체로 이동시킨 것이다. </br> </br>
+
+
+시스템을 객체로 분해하는 데는 크게 두 가지 방식이 존재한다. </br>
+
+1. 표현적 분해 
+2. 행위적 분해
+
+표현적 분해는 도메인에 존재하는 사물 또는 개념을 표현하는 객체들을 이용해 시스템을 분해한다. </br>
+=> 모든 책임을 도메인 객체에게 할당하면 낮은 응집도, 높은 결합도, 재사용성 저하와 같은 심각한 문제점에 봉착하게 될 가능성이 높아진다. </br> </br>
+
+이를 위해 도메인과 무관한 인공적인 객체 <strong>PURE FABRICATION(순수한 가공물)</strong>이라고 부른다. </br> </br>
+
+어떤 행동을 추가하려고 하는데 이 행동을 책임질 마땅한 도메인 개념이 존재하지 않느다면 PURE FABRICATION을 추가하고 이 객체에게 책임을 할당한다. </br> </br>
+
+
+설계자로서 우리의 역할은 도메인 추상화를 기반으로 애플리케이션 로직을 설계하는 동시에 품질의 측면에서 균형을 맞추는 데 필요한 객체들을 창조하는 것이다. </br> </br>
+
+먼저 도메인의 본질적인 개념을 표현하는 추상화를 이용해 애플리케이션을 구축하기 시작하라. </br>
+만약 도메인 개념이 만족스럽지 못하다면 주저하지 말고 인공적인 객체를 창조하라 </br>
+
+
+
 
 
 
