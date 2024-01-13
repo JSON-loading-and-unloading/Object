@@ -275,8 +275,78 @@ avatar.calculateDiscountAmount(screening, new AmountDiscountPolicy(..));
 
 <h3>숨겨진 의존성은 나쁘다.</h3>
 
+외부에서 객체에게 의존성을 전달하는 의존성 주입과 달리 SERVICE LOCATOR의 경우 객체가 직접 SERVICE LOCATOR에게 의존성을 해결해줄 것을 요청한다.</br></br>
+
+※SERVICE LOCATOR패턴은 서비스를 사용하는 코드로부터 서비스가 누구인지, 어디에 있는지를 몰라도 되게 해준다.</br>
+
+```
+
+
+public class Movie {
+    private String title;
+    private Duration runningTime;
+    private Money fee;
+    private DiscountPolicy discountPolicy;
+
+    public Movie(String title, Duration runningTime, Money fee) {
+        this.title = title;
+        this.runningTime = runningTime;
+        this.fee = fee;
+        this.discountPolicy = ServiceLocator.discountPolicy();
+    }
 
 
 
+```
+
+Moive는 직접 ServiceLocator의 메서드를 호출해서 DiscountPolicy에 대한 의존성을 해결</br>
+
+
+```
+
+
+public class ServiceLocator {
+    private static ServiceLocator soleInstance = new ServiceLocator();
+    private DiscountPolicy discountPolicy;
+
+    public static DiscountPolicy discountPolicy() {
+        return soleInstance.discountPolicy;
+    }
+
+    public static void provide(DiscountPolicy discountPolicy) {
+        soleInstance.discountPolicy = discountPolicy;
+    }
+
+    private ServiceLocator() {
+    }
+}
+
+
+
+```
+
+ServiceLocator는 DiscountPolicy의 인스턴스를 등록하기 위한 provide메서드와 인스턴스를 반환하는 discountPolicy메서드를 구현</br></br>
+
+
+
+```
+
+ServiceLocator.provide(new AmountDiscountPolicy(...));
+ Movie avatar = new Movie (
+             "아바타",
+              Duration.ofMinutes(120),
+               Money.wons(10000));
+
+
+
+```
+
+SERVICE LOCATOR의 단점은 의존성을 감춘다.</br>
+=> 의존성과 관련된 문제가 컴파일타임이 아닌 런타임에 가서야 발견된다는 사실을 알 수 있다.</br>
+=> 의존성을 숨기는 코드는 단위 테스트 작성도 어렵다.</br></br>
+
+❗캡슐화는 코드를 읽고 이해하는 행위와 관련이 있다. 클래스의 퍼블릭 인터페이스만으로 사용 방법을 이해할 수 있는 코드가 캡슐화의 관점에서 훌륭한 코드다.❗</br>
+가급적 의존성을 객체의 퍼블릭 인터페이스에 노출하라!
+</br>
 
 
