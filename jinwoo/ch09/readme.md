@@ -212,6 +212,10 @@ Movie는 추상 클래스인 DiscountPolicy에 의존하고 AmountDiscountPolicy
 
 ### 의존성 역전 원칙과 패키지 🤔
 
+역전은 의존성의 방향뿐만 아니라 인터페이스의 소유권에도 적용된다.
+
+`AmountDiscountPolicy` `PercentDiscountPolicy` `DiscountPolicy` 가 하나의 패키지에 있고 `Movie` 는 다른 패키지에 있다면 `Movie` 를 다양한 컨텍스트에서 재사용하려면 불필요한 클래스들(`AmountDiscountPolicy` `PercentDiscountPolicy`)이 함께 배포되어야 한다. 컴파일 측면에서 이처럼 불필요한 클래스들을 같은 패키지에 두면 전체적인 빌드 시간을 가파르게 상승시킨다. 따라서 재사용될 필요가 없는 클래스들은 별도의 독립적인 패키지에 모아야 한다. 이를 SEPARATED INTERFACE 패턴이라고 한다.
+
 ## 05 유연성에 대한 조언
 
 ### 유연한 설계는 유연성이 필요할 때만 옳다
