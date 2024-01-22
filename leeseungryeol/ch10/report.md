@@ -504,3 +504,108 @@ public class PersonalPlaylist extends Playlist {
 
 
 
+<h2>Phone 다시 살펴보기</h2>
+
+다시 phone 클래스로 돌아와서 이를 해결할 수 있는 방법은 추상화이다.</br>
+
+
+<h3>추상화에 의존하자</h3>
+
+이 문제를 해결하는 가장 일반적인 방법은 자식 클래스가 부모 클래스의 구현이 아닌 추상화에 의존하도록 만드는 것이다.</br>
+정확하게 말하면 부모 클래스와 자식 클래스 모두 추상화에 의존하도록 수정해야 한다.</br></br>
+
+코드 증복을 제거하기 위해 상속을 도입할 때 따르는 두 가지 원칙</br>
+
+ 1. 두 메서드가 유사하게 보인다면 차이점을 메서드로 추출하라. 메서드 추출을 통해 두 메서드를 동일한 형태로 보이도록 만들 수 있다.</br>
+ 2. 부모 클래스의 코드를 하위로 내리지 말고 자식 클래스의 코드를 상위로 올려라. 부모 클래스의 구체적인 메서드를 자식 클래스로 내리는 것보다 자식 클래스의 추상적인 메서드를
+    부모 클래스로 올리는 것이 재사용성과 응집도 측면에서 더 뛰어난 결과를 얻을 수 있다.</br>
+
+<h3>차이를 메서드로 추출하라</h3>
+
+※변하는 것부터 변하지 않는 것을 분리하라. 변하는 부분을 찾고 이를 캡슐화하라</br></br>
+
+위에서 calculateFee는 같지만 for문 안에 있는 계산 로직이 다르다.</br>
+이를 분리하기 위해 calculateCallFee로 만든다.</br></br>
+
+이 둘을 부모 추상 클래스로 뺴자</br>
+
+```
+
+public abstract class AbstractPhone {
+    private List<Call> calls = new ArrayList<>();
+
+    public Money calculateFee() {
+        Money result = Money.ZERO;
+
+        for(Call call : calls) {
+            result = result.plus(calculateCallFee(call));
+        }
+
+        return result;
+    }
+
+    abstract protected Money calculateCallFee(Call call);
+}
+
+
+```
+
+
+
+```
+
+public class Phone extends AbstractPhone {
+    private Money amount;
+    private Duration seconds;
+
+    public Phone(Money amount, Duration seconds) {
+        this.amount = amount;
+        this.seconds = seconds;
+    }
+
+    @Override
+    protected Money calculateCallFee(Call call) {
+        return amount.times(call.getDuration().getSeconds() / seconds.getSeconds());
+    }
+}
+
+
+```
+
+
+
+
+```
+
+public class NightlyDiscountPhone extends AbstractPhone {
+    private static final int LATE_NIGHT_HOUR = 22;
+
+    private Money nightlyAmount;
+    private Money regularAmount;
+    private Duration seconds;
+
+    public NightlyDiscountPhone(Money nightlyAmount, Money regularAmount, Duration seconds) {
+        this.nightlyAmount = nightlyAmount;
+        this.regularAmount = regularAmount;
+        this.seconds = seconds;
+    }
+
+    @Override
+    protected Money calculateCallFee(Call call) {
+        if (call.getFrom().getHour() >= LATE_NIGHT_HOUR) {
+            return nightlyAmount.times(call.getDuration().getSeconds() / seconds.getSeconds());
+        } else {
+            return regularAmount.times(call.getDuration().getSeconds() / seconds.getSeconds());
+        }
+    }
+}
+
+
+
+
+```
+
+
+위와 같이 구성할 수 있다.</br>
+자식 클래스들 사이의 공통점을 부모 클래스로 옮김으로써 실제 코드를 기반으로 상속 계층을 구성할 수 있다.</br></br>
+
