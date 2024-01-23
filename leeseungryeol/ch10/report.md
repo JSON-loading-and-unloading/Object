@@ -16,7 +16,6 @@ DRY: 원칙의 이름이 무엇이건 핵심은 코드 안에 중복이 존재�
 
 
 ```
-
 public class Call {
     private LocalDateTime from;
     private LocalDateTime to;
@@ -35,9 +34,10 @@ public class Call {
     }
 }
 
-
 ```
 
+
+```
 public class Phone {
     private Money amount;
     private Duration seconds;
@@ -87,7 +87,6 @@ Phone의 책임 : 통화 요금 계산함. ( 단위시간, 단위시간당 값, 
 
 
 ```
-
 public class NightlyDiscountPhone {
     private static final int LATE_NIGHT_HOUR = 22;
 
@@ -130,8 +129,6 @@ Phone과 NightlyDiscountPhone은 중복 코드가 발생한다.</br></br>
 
 
 ```
-
-
 public class Phone {
     private static final int LATE_NIGHT_HOUR = 22;
     enum PhoneType { REGULAR, NIGHTLY }
@@ -199,7 +196,6 @@ public class Phone {
 <h3>상속을 이용해서 중복 코드 제거</h3>
 
 ```
-
 public class Phone {
     private Money amount;
     private Duration seconds;
@@ -245,7 +241,6 @@ public class Phone {
 
 
 ```
-
 public class NightlyDiscountPhone extends Phone {
     private static final int LATE_NIGHT_HOUR = 22;
 
@@ -306,7 +301,6 @@ super 참조를 통해 부모 클래스인 Phone calculateFee메서드를 호출
 Stack은 Vector로 상속을 받는다.</br>
 
 ```
-
 Stack<String> stack = new Stack<>();
 
 stack.push("1st");
@@ -332,8 +326,6 @@ Vector의 stack.add(0, "4st")를 사용하며 Stack이 규칙을 무너뜨릴 �
 <h3>메서드 오버라이딩 오작용 문제</h3>
 
 ```
-
-
 public class InstrumentedHashSet<E> extends HashSet<E> {
     private int addCount = 0;
 
@@ -375,7 +367,6 @@ public class InstrumentedHashSet<E> extends HashSet<E> {
 
 
 ```
-
 InstrumentHashSet<String> languages = new InstrumentedHashSet<>();
 languages.addAll(Arrays.asList("Java", "Ruby", "Scala"));
 
@@ -396,7 +387,6 @@ HashSet은 요소를 추가하기 위해 내부적으로 add 메서드를 호출
 
 
 ```
-
 public class Song {
     private String singer;
     private String title;
@@ -422,7 +412,6 @@ public class Song {
 
 
 ```
-
 public class Playlist {
     private List<Song> tracks = new ArrayList<>();
 
@@ -441,22 +430,17 @@ public class Playlist {
 
 
 ```
-
-
 public class PersonalPlaylist extends Playlist {
     public void remove(Song song) {
         getTracks().remove(song);
     }
 }
 
-
-
 ```
 
 위 코드에서 요구사항이 변경돼서 PlayList에서 노래의 목록뿐만 아니라 가수별 노래의 제목도 함께 관리해야 한다.</br>
 
 ```
-
 public class Playlist {
     private List<Song> tracks = new ArrayList<>();
     private Map<String, String> singers = new HashMap<>();
@@ -475,20 +459,19 @@ public class Playlist {
     }
 }
 
-
 ```
 
 
 
-```
 
+
+```
 public class PersonalPlaylist extends Playlist {
     public void remove(Song song) {
         getTracks().remove(song);
         getSingers().remove(song.getSinger());
     }
 }
-
 
 ```
 
@@ -529,8 +512,8 @@ public class PersonalPlaylist extends Playlist {
 
 이 둘을 부모 추상 클래스로 뺴자</br>
 
-```
 
+```
 public abstract class AbstractPhone {
     private List<Call> calls = new ArrayList<>();
 
@@ -547,13 +530,11 @@ public abstract class AbstractPhone {
     abstract protected Money calculateCallFee(Call call);
 }
 
-
 ```
 
 
 
 ```
-
 public class Phone extends AbstractPhone {
     private Money amount;
     private Duration seconds;
@@ -569,14 +550,11 @@ public class Phone extends AbstractPhone {
     }
 }
 
-
 ```
 
 
 
-
 ```
-
 public class NightlyDiscountPhone extends AbstractPhone {
     private static final int LATE_NIGHT_HOUR = 22;
 
@@ -601,11 +579,60 @@ public class NightlyDiscountPhone extends AbstractPhone {
 }
 
 
-
-
 ```
 
 
 위와 같이 구성할 수 있다.</br>
 자식 클래스들 사이의 공통점을 부모 클래스로 옮김으로써 실제 코드를 기반으로 상속 계층을 구성할 수 있다.</br></br>
+
+
+<h3>세금 추가하기</h3>
+
+
+인스턴스 변수인 taxRate를 추가하고 요금에 세금이 부과되도록 calculateFee메서드를 수정한다. </br>
+
+
+```
+public abstract class Phone {
+    private double taxRate;
+    private List<Call> calls = new ArrayList<>();
+
+    public Phone(double taxRate) {
+        this.taxRate = taxRate;
+    }
+
+    public Money calculateFee() {
+        Money result = Money.ZERO;
+
+        for(Call call : calls) {
+            result = result.plus(calculateCallFee(call));
+        }
+
+        return result.plus(result.times(taxRate));
+    }
+
+    protected abstract Money calculateCallFee(Call call);
+}
+
+
+```
+
+
+이 수정으로 끝난 것이 아니라 RegularPhone, NightlyDiscountPhone도 생성자를 수정해줘야한다.</br></br>
+
+자식 클래스는 자신의 인스턴스를 생성할 때 부모 클래스에 정의된 인스턴스 변수를 초기화해야 하기 때문에 자연스럽게 부모 클래스에 추가된 인스턴스 변수는 자식 클래스의 초기화 로직에 영향을 미치게 된다.</br>
+=> 객체 생성 로직에 대한 변경을 막기보다는 핵심 로직의 중복을 막아라. 핵심 로직은 한 곳에 모아 놓고 조심스럽게 캡슐화해야 한다. 그리고 공통적인 핵심 로직은 최대한 추상화해야 한다.</br>
+
+
+
+<h2>차이에 의한 프로그래밍</h2>
+
+객체지향 세게에서 중복 코드를 제거하고 코드를 재사용할 수 있는 가장 유명한 방법은 상속이다.</br>
+1. 여러 클래스에 공통적으로 포함돼 있는 중복 코드를 하나의 클래스로 모은다.
+2. 원래 클래스들에서 중복 코드를 제거한 후 중복 코드가 옮겨진 클래스를 상속 관계로 연결한다.
+
+
+💥상속이 코드 재사용이라는 측면에서 매우 강력한 도구인 것은 사실이지만 강력한 만큼 잘못 사용할 경우에 돌아오는 피해 역시 크다💥</br>
+💥상속은 코드 재사용과 관련된 대부분의 경우에 우아한 해결 방법이 아니다.💥</br>
+
 
