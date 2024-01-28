@@ -152,3 +152,142 @@ Playlist와 PersonalPlaylist를 함께 수정해야 하는 문제가 해결되�
 </br>
 그렇다하더라도 합성을 이용하면 향후에 Playlist의 내부 구현을 변경하더라도 파급효과를 최대한 PersonalPlaylist 내부로 캡슐화할 수 있다.
 </br>
+
+
+
+<h2>상속으로 인한 조합의 폭발적인 증가</h2>
+
+
+상속으로 인한 문제점
+
+1. 하나의 기능을 추가하거나 수정하기 위해 불필요하게 많은 수의 클래스를 추가하거나 수정해야 한다.
+2. 단일 상속만 지원하는 언어에서는 상속으로 인해 오히려 중복 코드의 양이 늘어날 수 있다.
+
+
+<h3>기본 정책에 세금 정책 조합하기</h3>
+
+~~~
+
+public class TaxableRegularPhone extends RegularPhone {
+    private double taxRate;
+
+    public TaxableRegularPhone(Money amount, Duration seconds,
+                               double taxRate) {
+        super(amount, seconds);
+        this.taxRate = taxRate;
+    }
+
+    @Override
+    public Money calculateFee() {
+        Money fee = super.calculateFee();
+        return fee.plus(fee.times(taxRate));
+    }
+}
+
+~~~
+
+부모 클래스의 메서드를 재사용하기 위해 super 호출을 사용하면 원하는 겨로가를 쉽게 얻을 수는 있지만 자식 클래스와 부모 클래스 사이의 결합도가 높아지고 만다.</br>
+
+~~~
+
+public abstract class Phone {
+    private List<Call> calls = new ArrayList<>();
+
+    public Money calculateFee() {
+        Money result = Money.ZERO;
+
+        for(Call call : calls) {
+            result = result.plus(calculateCallFee(call));
+        }
+
+        return afterCalculated(result);
+    }
+
+    protected abstract Money calculateCallFee(Call call);
+    protected abstract Money afterCalculated(Money fee);
+}
+~~~
+
+
+
+~~~
+
+public class RegularPhone extends Phone {
+    private Money amount;
+    private Duration seconds;
+
+    public RegularPhone(Money amount, Duration seconds) {
+        this.amount = amount;
+        this.seconds = seconds;
+    }
+
+    @Override
+    protected Money calculateCallFee(Call call) {
+        return amount.times(call.getDuration().getSeconds() / seconds.getSeconds());
+    }
+
+    @Override
+    protected Money afterCalculated(Money fee) {
+        return fee;
+    }
+}
+
+~~~
+
+
+Phone 클래스에 새로운 추상 메서드인 afterCalculated를 추가하고 RegularPhone은ㅇ 요금을 수정할 필요가 없기 때문에 afterCalculated메서드에서 파라미터로 전달된 요금을 그대로 반환하도록 구현한다.</br>
+
+=> 부모 클래스에 추상 메서드를 추가하면 모든 자식 클래스들이 추상 메서드를 오버라이딩해야 하는 문제가 발생한다.</br>
+   (자식 클래스의 수가 많을 경우에는 꽤나 번거로운 일이 될 수밖에 없다.)</br>
+
+
+~~~
+
+public class TaxableRegularPhone extends RegularPhone {
+    private double taxRate;
+
+    public TaxableRegularPhone(Money amount, Duration seconds, double taxRate) {
+        super(amount, seconds);
+        this.taxRate = taxRate;
+    }
+
+    @Override
+    protected Money afterCalculated(Money fee) {
+        return fee.plus(fee.times(taxRate));
+    }
+}
+
+~~~
+
+
+
+~~~
+
+public class TaxableNightlyDiscountPhone extends NightlyDiscountPhone {
+    private double taxRate;
+
+    public TaxableNightlyDiscountPhone(Money nightlyAmount, Money regularAmount, Duration seconds, double taxRate) {
+        super(nightlyAmount, regularAmount, seconds);
+        this.taxRate = taxRate;
+    }
+
+    @Override
+    protected Money afterCalculated(Money fee) {
+        return fee.plus(fee.times(taxRate));
+    }
+}
+
+~~~
+
+부가 정책에 따른 클래스 생성</br>
+
+![KakaoTalk_Photo_2024-01-28-21-19-42](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/f479e461-8c43-4954-b99d-7da1b78510fa)
+
+
+위 클래스들을 다이어그램을 나타냈다.</br></br>
+
+TaxableNightlyDiscountPhone과 TaxableRegularPhone 사이에 코드를 중복했다.</br></br>
+
+다른 조건의 부가 정책을 경우의 수에 따라 상속을 하여도 계속하여 코드가 중복된다.</br>
+=> 이를 해결하는 방법은 상속을 포기하는 것이다.</br>
+
