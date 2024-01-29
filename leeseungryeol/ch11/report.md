@@ -291,3 +291,212 @@ TaxableNightlyDiscountPhone과 TaxableRegularPhone 사이에 코드를 중복했
 다른 조건의 부가 정책을 경우의 수에 따라 상속을 하여도 계속하여 코드가 중복된다.</br>
 => 이를 해결하는 방법은 상속을 포기하는 것이다.</br>
 
+
+
+
+<h3>합성 관계로 변경하기</h3>
+
+상속 관계는 컴파일타임에 결정되고 고정되기 때문에 코드를 실행하는 도중에는 변경할 수 없다.</br>
+따라서 여러 기능을 조합해야 하는 설계에 상속을 이용하면 모든 조합 가능한 경우별로 클래스르 추가해야한다.</br></br>
+
+합성은 컴파일 타임 관계를 런타임 관계로 변경함으로써 이 문제를 해결한다.</br>
+합성을 사용하면 구현이 아닌 퍼블릭 인터페이스에 대해서만 의존할 수 있기 때문에 런타임에 객체의 관계를 변경할 수 있다.</br>
+
+<h3>기본 정책 합성하기</h3>
+
+```
+
+public interface RatePolicy {
+    Money calculateFee(Phone phone);
+}
+
+```
+
+
+```
+
+public abstract class BasicRatePolicy implements RatePolicy {
+    @Override
+    public Money calculateFee(Phone phone) {
+        Money result = Money.ZERO;
+
+        for(Call call : phone.getCalls()) {
+            result.plus(calculateCallFee(call));
+        }
+
+        return result;
+    }
+
+    protected abstract Money calculateCallFee(Call call);
+}
+
+```
+
+
+```
+public class RegularPolicy extends BasicRatePolicy {
+    private Money amount;
+    private Duration seconds;
+
+    public RegularPolicy(Money amount, Duration seconds) {
+        this.amount = amount;
+        this.seconds = seconds;
+    }
+
+    @Override
+    protected Money calculateCallFee(Call call) {
+        return amount.times(call.getDuration().getSeconds() / seconds.getSeconds());
+    }
+}
+
+```
+
+
+```
+public class Phone {
+    private RatePolicy ratePolicy;
+    private List<Call> calls = new ArrayList<>();
+
+    public Phone(RatePolicy ratePolicy) {
+        this.ratePolicy = ratePolicy;
+    }
+
+    public List<Call> getCalls() {
+        return Collections.unmodifiableList(calls);
+    }
+
+    public Money calculateFee() {
+        return ratePolicy.calculateFee(this);
+    }
+}
+
+```
+
+RatePolicy ratePolicy가 Phone 클래스 내부에 포함돼있다.</br>
+=> 컴파일 의존성을 구체적인 런타임 의존성으로 대체하기 위해 생성자를 통해 RatePolicy의 인스턴스에 대한 의존성을 주입받는다.</br>
+
+
+
+
+![KakaoTalk_20240129_152053779](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/e5cb4f99-bc98-4199-914f-f452b97301da)
+
+
+일반 요금제의 규칙에 따라 통화 요금을 계산하고 싶다면 </br>
+
+```
+Phone  phone = new Phone( new RegularPolicy( Money.wons(10), Duration.ofSeconds(10)));
+
+```
+
+
+<h3>부가 정책 적용하기</h3>
+
+
+![KakaoTalk_20240129_151846644_02](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/b08861c0-bcb4-4817-afc9-36eac3f43efa)
+
+부가 정책 AdditionalRatePolicy
+
+```
+public abstract class AdditionalRatePolicy implements RatePolicy {
+    private RatePolicy next;
+
+    public AdditionalRatePolicy(RatePolicy next) {
+        this.next = next;
+    }
+
+    @Override
+    public Money calculateFee(Phone phone) {
+        Money fee = next.calculateFee(phone);
+        return afterCalculated(fee) ;
+    }
+
+    abstract protected Money afterCalculated(Money fee);
+}
+
+```
+
+부가 정책 AdditionalRatePolicysms RatePolicy의 역할을 수행하기 때문에 RatePolicy 인터페이스를 구현한다.</br>
+
+
+```
+
+public class TaxablePolicy extends AdditionalRatePolicy {
+    private double taxRatio;
+
+    public TaxablePolicy(double taxRatio, RatePolicy next) {
+        super(next);
+        this.taxRatio = taxRatio;
+    }
+
+    @Override
+    protected Money afterCalculated(Money fee) {
+        return fee.plus(fee.times(taxRatio));
+    }
+}
+
+```
+
+
+```
+
+public class RateDiscountablePolicy extends AdditionalRatePolicy {
+    private Money discountAmount;
+
+    public RateDiscountablePolicy(Money discountAmount, RatePolicy next) {
+        super(next);
+        this.discountAmount = discountAmount;
+    }
+
+    @Override
+    protected Money afterCalculated(Money fee) {
+        return fee.minus(discountAmount);
+    }
+}
+
+```
+
+
+
+![KakaoTalk_20240129_151846644_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/90d7e40e-55f9-4d18-b029-fd3de3902a7f)
+
+
+<h3>기본 정책과 부가 정책 합성하기</h3>
+
+```
+
+Phone phone = new Phone(
+                      new TaxablePolicy(0.05,
+                             new RegularPolicy(...));
+
+Phone phone = new Phone(
+                      new TaxablePolicy(0.05,
+                             new RateDiscountablePolicy(Money.wons(1000),
+                                    new RegularPolicy(...)));
+
+```
+
+합성의 장점은 여기서 끝나지 않는다~ㅎ
+
+
+<h3>새로운 정책 추가하기</h3>
+
+
+![KakaoTalk_20240129_151846644](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/d0fe6403-12af-4ad7-8283-18602dc97d63)
+
+
+고정 요금제가 필요하다면 고정 요금제를 구현한 클래스 '하나만' 추가한 후 원하는 방식으로 조합한다.</br>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
