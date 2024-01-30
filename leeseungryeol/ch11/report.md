@@ -487,6 +487,112 @@ Phone phone = new Phone(
 고정 요금제가 필요하다면 고정 요금제를 구현한 클래스 '하나만' 추가한 후 원하는 방식으로 조합한다.</br>
 
 
+<h2>믹스인</h2>
+
+믹스인은 객체를 생성할 때 코드 일부를 클래스 안에 섞어 넣어 재사용하는 기법을 가리킨다.
+합성이 실행 시점에 객체를 조합하는 재사용 방법이라면 믹스인은 컴파일 시점에 필요한 코드 조각을 조합하는 재사용 방법이다.
+
+상속과 차이점
+
+상속의 목적은 자식 클래스를 부모 클래스와 동일한 개념적인 범주로 묶어 is-a관계를 만들기 위한 것이다.
+반면 믹스인은 말 그대로 코드를 다른 코드 안에 섞어 넣기 위한 방법이다.
+하지만 상속이 클래스와 클래스 사이의 관계를 고정시키는 데 비해 믹스인은 유연하게 관계를 재구성 할 수 있다.
+
+
+<h3>기본정책 구현하기</h3>
+
+
+```
+abstract class BasicRatePolicy {
+  def calculateFee(phone: Phone): Money = phone.calls.map(calculateCallFee(_)).reduce(_ + _)
+  
+  protected def calculateCallFee(call: Call): Money;
+}
+
+```
+
+
+```
+
+class RegularPolicy(val amount: Money, val seconds: Duration) extends BasicRatePolicy {
+  override protected def calculateCallFee(call: Call): Money = amount * (call.duration.getSeconds / seconds.getSeconds)
+}
+
+```
+
+표준 요금제를 구현하는 RegularPolicy는 BasicRatePoilicy를 상속받아 개별 call의 요금을 계산하는 calculateCallFee메서드를 오버라이딩한다.
+
+<h3>트레이트로 부가 정책 구현하기</h3>
+
+```
+
+trait TaxablePolicy extends BasicRatePolicy {
+  val taxRate: Double
+  override def calculateFee(phone: Phone): Money = {
+    val fee = super.calculateFee(phone)
+    return fee + fee * taxRate
+  }
+}
+
+```
+
+TaxablePolicy 트레이트가 BasicRatePolicy를 확장한다.</br>
+이것은 상속의 개념이 아니라 TaxablePolicy가 BasicRatePolicy나 BasicRatePolicy의 자손에 해당하는 경우에만 믹스인될 수 있다는 것이다.</br>
+
+TaxablePolicy는 BasicRatePolicy의 요금 계산이 끝난 후 결과로 반환된 요금에 세금을 부과해야 한다.</br>
+따라서 BasicRatePolicy의 calculateFee메서드를 오버라이딩한 후 super 호출을 통해 먼저 BasicRatePolicy의 calculateFee메서드를 실행한 후 자신의 처리를 수행한다.</br></br>
+
+super를 쓰지 말라더니 이러면 결합도가 커지지 않나?</br>
+
+TaxablePolicy 트레이트가 BasicRatePolicy를 상속하도록 구현했지만 실제로 TaxablePolicy가 BasicRatePolicy의 자식 트레이트가 되는 것이 아니다.</br>
+위 코드에서 extends 문은 단지 TaxablePolicy가 사용될 수 있는 문맥을 제한할 뿐이다.</br></br>
+
+super로 참조되는 코드는 고정되지 않는다.</br>
+RegularPolicy에 믹스인되는 경우에 RegularPolicy의 calculateFee 메서드가 호출될 것이다.</br>
+
+<h3>부가 정책 트레이트 믹스인하기</h3>
+
+스칼라는 트레이트를 클래스나 다른 트레이트에 믹스인할 수 있도록 extends와 with 키워드를 제공한다.</br>
+
+```
+
+trait TaxablePolicy extends BasicRatePolicy {
+  val taxRate: Double
+  override def calculateFee(phone: Phone): Money = {
+    val fee = super.calculateFee(phone)
+    return fee + fee * taxRate
+  }
+}
+
+```
+
+extends를 이용해 RegularPolicy 클래스를 상속 받고 with를 이용해 TaxablePolicy 트레이트를 믹스인한 새로운 클래스를 만들 수 있다.</br></br>
+
+위 코드에서 TaxableRegularPolicy의 인스턴스가 calcualteFee 메시지를 수신했다고 하자. 먼저 TaxableRegularPolicy 클래스에서 메시지를 처리할 메서드를 찾는다.</br>
+이 경우 메서드를 발견할 수 없어. TaxablePolicy에서 메서드를 찾는다.</br>
+TaxablePolicy에 calcualteFee메서드가 구현돼 있기 때문에 해당 메서드를 실행한다.</br>
+메서드 구현 안에 super 호출이 있기 때문에 상속 계층의 다음 단계에 위치한 RegularPolicy에 calculateFee 메서드가 존재하는지 검색한다.</br>
+RegularPolicy에 calculateFee 메서드를 발견할 수 없기 때문에 다음 단계인 BasicRatePolicy의 calculateFee메서드가 호출되고 표준 요금제에 따라 요금이 계산된다.</br>
+
+위 예제를 통해 트레이트 믹스인이 상속에 비해 코드 재사용과 확장의 관점에서 얼마나 편리한지를 알 수 있다.</br>
+
+믹스인을 사용하더라도 상속에서 클래스의 숫자가 기하급수적을 늘어나는 클래스 폭발 문제가 있나라는 말을 할 수 있다.</br>
+클래스를 만들어야 하는 것이 불만이라면 클래스를 만들지 않고 다음과 같이 인스턴스를 생성할 때 트레이트 믹스인할 수도 있다.</br>
+
+```
+new RegularPolicy( Money(100), Duration.ofSeconds(10))
+   with RateDiscountablePolicy
+   with TaxablePolicy {
+ val discounstAmount = Money(100)     
+ val taxRate = 0.2
+
+}
+
+
+```
+
+※이 방법은 RateDiscountablePolicy와 TaxablePolicy를 RegularPolicy에 믹스인한 인스턴스가 오직 한 군데에서만 필요한 경우에 사용할 수 있다.</br>
+
 
 
 
