@@ -297,13 +297,13 @@ foo.bar()를 읽는 것으로는 실행되는 bar가 어떤 클래스의 메서�
 <h3>자동적인 메시지 위임</h3>
 
 <h4>메서드 오버라이딩</h4>
+![KakaoTalk_20240203_155537765](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/218d1fe1-47f4-46e4-a97f-01f60385735d)
 
-![KakaoTalk_20240203_155537765](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/a790c820-565f-4db5-b7cc-2b093f76531c)
 
 위 그림은 Lecture 인스턴스에게 evalaute 메시지를 전송한 시점의 메모리 상태를 나타냈다.</br>
 런타임에 자동으로 self 참조가 메시지 수신 객체를 가리키도록 설정된다.</br></br>
 
-![KakaoTalk_20240203_155537765_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/a8f39d5c-c07e-489b-829e-e3145b38933b)
+![KakaoTalk_20240203_155537765_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/882ddfe1-078d-4ca7-9291-7e4ec3d2f45b)
 
 Lecture클래스의 evaluate메서드와 시그니처가 동일한 메서드를 자식 클래스인 GradeLecture에서 재정의하고 있다.</br>
 동적 메서드 탐색은 self 참조가 가리키는 객체의 클래스인 GradeLecture에서 시작되고 GradeLecture 클래스 안에 evaluate 메서드가 구현돼 있기 때문에 먼저 발결된 메서드가 실행되는 것이다.</br></br>
