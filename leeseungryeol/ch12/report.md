@@ -209,3 +209,113 @@ Lecture lecture = new GradeLecture("객체지향 프로그래밍",
 이처럼 부모클래스로부터 상속을 받았을 경우 런타임에 시스템이 자식 클래스에 정의되지 않은 메서드가 있을 경우 이 메서드를 부모 클래스 안에서 탐색한다.</br>
 
 
+<h2>업캐스팅과 동적 바인딩</h2>
+
+```
+
+public class Professor {
+    private String name;
+    private Lecture lecture;
+
+    public Professor(String name, Lecture lecture) {
+        this.name = name;
+        this.lecture = lecture;
+    }
+
+    public String compileStatistics() {
+        return String.format("[%s] %s - Avg: %.1f", name,
+                lecture.evaluate(), lecture.average());
+    }
+}
+
+```
+
+```
+
+Professor professor = new Professor( "다익스트라",
+                                "객체지향 프로그래밍",
+                                70,
+                                Arrays.asList(81, 95, 75, 50, 45));
+String evaluration = lecture.evaluate();
+
+```
+
+
+
+```
+
+Professor professor = new Professor( "다익스트라",
+                                "객체지향 프로그래밍",
+                                70,
+                                Arrays.asList( new Grade("A", 100, 95),
+                                              new Grade("B", 94, 80),
+                                              new Grade("C", 79, 70),
+                                              new Grade("D", 69, 50),
+                                              new Grade("F", 49, 0),
+
+                                ),
+                                Arrays.asList(81, 95, 75, 50, 45));                 // 업캐스팅
+
+
+String statistics = professor.compileStatistics();                                  // 동적 바인딩
+
+```
+
+<h3>업캐스팅</h3>
+
+부모 클래스의 인스턴스 대신 자식 클래스의 인스턴스를 사용하더라도 메시지를 처리하는 데에 아무런 문제가 없으며, 컴파일러는 명시적인 타입 변환 없이도 자식 클래스가 부모 클래스를 대체할 수 있게 허용한다.</br>
+이를 업캐스팅이라고 한다.</br></br>
+
+반대로 부모 클래스의 인스턴스를 자식 클래스 타입으로 변환하기 위해서는 명시적인 타입 캐스팅이 필요한데 이를 다운 캐스팅이라고 부른다.</br>
+
+```
+
+Lecture lecture = new GradeLecture();
+GradeLecture GradeLecture = (GradeLecture)lecture;
+
+```
+
+
+<h3>동적 바인딩</h3>
+
+bar 함수를 호출하는 구문이 나타난다면 실제로 실행되는 코드는 바로 bar함수다.</br>
+다시말해 코드를 작성하는 시점에 호출될 코드가 결정된다.</br>
+이처럼 컴파일타임에 호출할 함수를 결정하는 방식을 정적 바인딩, 초기 바인딩, 컴파일타임 바인딩이라고 부른다.</br></br>
+
+객체지향 언어에서는 메시지를 수신했을 때 실행될 메서드가 런타임에 결정된다.</br>
+foo.bar()를 읽는 것으로는 실행되는 bar가 어떤 클래스의 메서드인지를 판단하기 어렵다.</br>
+이처럼 실행될 메서드를 런타임에 결정하는 방식을 동적 바인딩 또는 지연 바인딩이라고 부른다.</br></br>
+
+<h2>동적 메서드 탐색과 다형성</h2>
+
+객체지향 시스템은 다음 규칙에 따라 실행할 메서드를 선택한다.</br></br>
+
+- 메시지를 수신한 객체는 먼저 자신을 생성한 클래스에 적합한 메서드가 존재하는지 검사한다. 존재하면 메서드를 실행하고 탐색을 종료한다.</br>
+- 메서드를 찾기 못했다면 부모 클래스에서 메서드 탐색을 계속한다. 이 과정은 적합한 메서드를 찾을 때까지 상속 계층을 따라 올라가며 계속된다.</br>
+- 상속 계층의 가장 최상위 클래스에 이르렀지만 메서드를 발견하지 못한 경우 예외를 발생시키며 탐색을 중단한다.</br>
+
+<h3>자동적인 메시지 위임</h3>
+
+<h4>메서드 오버라이딩</h4>
+
+![KakaoTalk_20240203_155537765](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/a790c820-565f-4db5-b7cc-2b093f76531c)
+
+위 그림은 Lecture 인스턴스에게 evalaute 메시지를 전송한 시점의 메모리 상태를 나타냈다.</br>
+런타임에 자동으로 self 참조가 메시지 수신 객체를 가리키도록 설정된다.</br></br>
+
+![KakaoTalk_20240203_155537765_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/a8f39d5c-c07e-489b-829e-e3145b38933b)
+
+Lecture클래스의 evaluate메서드와 시그니처가 동일한 메서드를 자식 클래스인 GradeLecture에서 재정의하고 있다.</br>
+동적 메서드 탐색은 self 참조가 가리키는 객체의 클래스인 GradeLecture에서 시작되고 GradeLecture 클래스 안에 evaluate 메서드가 구현돼 있기 때문에 먼저 발결된 메서드가 실행되는 것이다.</br></br>
+
+
+<h4>메서드 오버로딩</h4>
+
+Lecture클래스의 average 메서드와 시그니처가 다른 메서드를 자식 클래스인 GradeLecture에서 재정의하고 있다.</br>
+이 경우 self는 GradeLecture에서 해당 함수를 못찾을 경우 Lecture로 올라간다.</br>
+
+
+
+
+
+
