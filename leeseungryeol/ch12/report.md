@@ -65,7 +65,6 @@ public class Lecture {
 
 
 ```
-
 Lecture lecture = new Lecture("객체지향 프로그래밍",
                                 70,
                                 Arrays.asList(81, 95, 75, 50, 45));
@@ -77,7 +76,6 @@ Lecture 클래스를 상속받으면 새로운 기능을 쉽고 빠르게 추가
 
 
 ```
-
 public class GradeLecture extends Lecture {
     private List<Grade> grades;
 
@@ -120,9 +118,9 @@ public class GradeLecture extends Lecture {
     }
 }
 
-
 ```
 
+```
 public class Grade {
     private String name;
     private int upper,lower;
