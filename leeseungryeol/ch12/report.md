@@ -488,6 +488,66 @@ super 참조의 정확한 의도는 '지금 이 클래스의 부모 클래스에
 부모 클래스의 메서드를 호출한다는 것은 그 메서드가 반드시 부모 클래스 안에 정의돼 있어야 한다는 것을 의미한다.</br>
 그에 비해 부모 클래스에서 메서드 탐색을 시작한다는 것은 그 클래스의 조상 어딘가에 그 메서드가 정의돼 있기만 하면 실행할 수 있다는 것을 의미한다.</br>
 
+<h2>상속 대 위임</h2>
+
+```
+class Lecture
+  def initialize(name, scores)
+    @name = name
+    @scores = scores
+  end
+
+  def stats(this)
+    "Name: #{@name}, Evaluation Method: #{this.evaluationMethod(this)}"
+  end
+
+  def getEvaluationMethod()
+    "Pass or Fail"
+  end
+end
+
+class GradeLecture
+  def initialize(name, canceled, scores)
+    @parent = Lecture.new(name, scores)
+    @canceled = canceled
+  end
+
+  def stats(this)
+    @parent.stats(this)
+  end
+
+  def getEvaluationMethod()
+    "Grade"
+  end
+end
+
+lecture = Lecture.new("OOP", [1,2,3])
+puts lecture.stats(lecture)
+
+grade_lecture = GradeLecture.new("OOP", false, [1,2,3])
+puts grade_lecture.stats(grade_lecture)
+
+```
+
+```
+grade_lecture = GradeLecture.new("OOP", false, [1,2,3])
+puts grade_lecture.stats(grade_lecture)
+
+```
+
+1. GradeLecture는 인스턴스 변수인 @parent에 Lecture의 인스턴스를 생성해서 저장한다.
+2. GradeLecture의 stats 메서드는 추가적인 작업 없이 @parent에게 요청을 그대로 전달한다.
+3. GradeLecture의 getEvaluationMethod메서드는 stats 메소드처럼 요청을 @parent에 전달하지 않고 자신만의 방법으로 메서드를 구현하고 있다.
+4. GradeLecture의 stats 메서드는 인자로 전달된 this를 그대로 Lecture의 stats메서드에 전달한다.
+
+GradeLecture의 stars메서드는 메시지를 직접 처리하지 않고 Lecture의 stats 메서드에게 요청을 전달한다는 것에 주목해보자.</br>
+이처럼 자신이 수신한 메시지를 다른 객체에게 동일하게 전달해서 처리를 요청하는 것을 위임이라고 한다.</br></br>
+
+위임은 본질적으로는 자신이 정의하지 않거나 처리할 수 없는 속성 또는 메서드의 탐색 과정을 다른 객체로 이동시키기 위해 사용한다.</br>
+이를 위해 위임은 항상 현재의 실행 문맥을 기리키는 self 참조를 인자로 전달한다.</br>
+이것이 self 참조를 전달하지 않은 포워딩과 위임의 차이점이다.</br>
+
+
 
 
 
