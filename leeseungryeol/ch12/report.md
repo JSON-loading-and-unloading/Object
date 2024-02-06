@@ -313,6 +313,180 @@ Lecture클래스의 average 메서드와 시그니처가 다른 메서드를 자
 이 경우 self는 GradeLecture에서 해당 함수를 못찾을 경우 Lecture로 올라간다.</br>
 
 
+<h3>동적인 문맥</h3>
+
+위처럼 
+동일한 코드라고 하더라도 self 참조가 가리키는 객체가 무엇인지에 따라 메서드 탐색을 위한 상속 계측의 범위가 동적으로 변한다.
+따라서, self 참조가 가리키는 객체의 타입을 변경함으로써 객체가 실행될 문맥을 동적으로 바꿀 수 있다.
+
+```
+public class Lecture {
+    private int pass;
+    private String title;
+    private List<Integer> scores = new ArrayList<>();
+
+    public Lecture(String title, int pass, List<Integer> scores) {
+        this.title = title;
+        this.pass = pass;
+        this.scores = scores;
+    }
+
+    public double average() {
+        return scores.stream().mapToInt(Integer::intValue).average().orElse(0);
+    }
+
+    public List<Integer> getScores() {
+        return Collections.unmodifiableList(scores);
+    }
+
+    public String evaluate() {
+        return String.format("Pass:%d Fail:%d", passCount(), failCount());
+    }
+
+    private long passCount() {
+        return scores.stream().filter(score -> score >= pass).count();
+    }
+
+    private long failCount() {
+        return scores.size() - passCount();
+    }
+
+    public String stats() {
+        return String.format("Title: %s, Evaluation Method: %s",
+                title, getEvaluationMethod());
+    }
+
+    public String getEvaluationMethod() {
+        return "Pass or Fail";
+    }
+}
+
+```
+
+Lecture 클래스에서 stats 메서드 안에서 자신의 getEvaluationMethod 메서드를 호출한다.
+</br>
+다시 한 번, 현재 클래스의 메서드를 호출하는 것이 아니라 현재 객체에서 메시지를 전송하는 것이다.</br></br>
+
+현재 객체란? self 참조가 가리키는 객체다.</br>
+이 객체는 처음에 stats 메시지를 수신했던 그 객체다.</br>
+이처럼 self 참조가 가리키는 자기 자신에게 메시지를 전송하는 것을 self 전송이라고 부른다.</br>
+=> self 전송을 이해하기 위해서는 self 참조가 가리키는 바로 그 객체에서부터 메시지를 탐색을 다시 시작한다는 사실을 기억하자!</br>
+
+
+
+![KakaoTalk_20240206_175854799](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/c50e7c72-8f5d-4b61-adc3-564fc14f94da)
+
+
+위 이미지를 보면 GradeLecture에서 stats 메서드를 찾고 Lecture 클래스에서 getEvaluatetionMethod메서드를 찾는데 Lecture 클래스가 아닌 self 가 가리키는 GradeLecture 클래스에서 먼저 찾는다.</br>
+하지만 이로 인해 최악의 경우네는 실제로 실행될 메서드를 이해하기 위해 상속 계층 전체를 훑어가며 코드를 이해해야하는 상황이 발생할 수도 있다.</br>
+
+<h3>이해할 수 없는 메시지</h3>
+
+이해할 수 없는 메시지를 처리하는 방법은 프로그래밍 언어가 정적 타입 언어에 속하는지, 동적 타입 언어에 속하는지에 따라 달라진다.</br></br>
+
+<h4>정적 타입 언어와 이해할 수 없는 메시지</h4>
+
+코드를 컴파일할 때 상속 계층 안의 클래스들이 메시지를 이해할 수 있는지 여부를 판단</br>
+따라서 상속 계층 전체를 탐색한 후에도 메시지를 처리할 수 있는 메서드를 발견하지 못했다면 컴파일 에러를 발생시킨다.</br>
+
+<h4>동적 타입 언어와 이해할 수 없는 메시지</h4>
+
+동적 타입 언어 역시 메시지를 수신한 객체의 클래스부터 부모 클래스의 방향으로 메서드를 탐색한다.</br>
+차이점이라면 동적 타입 언어에서는 컴파일 단계가 존재하지 않기 때문에 실제로 코드를 실행해보기 전에는 메시지 처리 가능 여부를 판단할 수 없다.</br>
+
+![KakaoTalk_20240206_175854799_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/5006a470-0232-453b-9f44-70ae48b1a7f2)
+
+
+이 또한 NomethodError 예외를 던진다.</br></br>
+
+이해할 수 없는 메시지를 처리할 수 있는 동적 타입 언어는 좀 더 순수한 관점에서 객체지향 패러다임을 구현한다고 볼 수 있다.</br>
+협력을 위해 메시지를 전송하는 객체를 메시지를 전송하는 객체는 메시지를 수신한 객체의 내부 구현에 대해서는 알지 못한다.</br>
+단지 객체가 메시지를 처리할 수 있다고 믿고 메시지를 전송할 뿐이다.</br>
+
+그러나 동적 타입 언어의 이러한 동적인 특성과 유연성은 코드를 이해하고 수정하기 어렵게 만들뿐만 아니라 디버깅 과정을 복잡하게 만들기도 한다.</br>
+정적 타입 언어에서는 이런 유연성이 부족하지만 좀 더 안정적이다. 모든 메시지는 컴파일 타임에 확인되고 이해할 수 없는 메시지는 컴파일 에러로 이어진다.</br>
+=> 실행 시점에 오류가 발생할 가능성을 줄임으로써 프로그램이 좀 더 안정적으로 실행될 수 있다.
+</br>
+
+<h3>self 대 super</h3>
+
+self 참조의 가장 큰 특징은 동적이다.</br>
+자식 클래스에서 부모 클래스의 인스턴스 변수나 메서드에 접근하기 위해 사용할 수 있는 super 참조라는 내부 변수를 제공한다.</br>
+
+```
+public class GradeLecture extends Lecture {
+    private List<Grade> grades;
+
+    public GradeLecture(String name, int pass, List<Grade> grades, List<Integer> scores) {
+        super(name, pass, scores);
+        this.grades = grades;
+    }
+
+    @Override
+    public String evaluate() {
+        return super.evaluate() + ", " + gradesStatistics();
+    }
+
+    private String gradesStatistics() {
+        return grades.stream().map(grade -> format(grade)).collect(joining(" "));
+    }
+
+    private String format(Grade grade) {
+        return String.format("%s:%d", grade.getName(), gradeCount(grade));
+    }
+
+    private long gradeCount(Grade grade) {
+        return getScores().stream().filter(grade::include).count();
+    }
+
+    public double average(String gradeName) {
+        return grades.stream()
+                .filter(each -> each.isName(gradeName))
+                .findFirst()
+                .map(this::gradeAverage)
+                .orElse(0d);
+    }
+
+    private double gradeAverage(Grade grade) {
+        return getScores().stream()
+                .filter(grade::include)
+                .mapToInt(Integer::intValue)
+                .average()
+                .orElse(0);
+    }
+
+    @Override
+    public String getEvaluationMethod() {
+        return "Grade";
+    }
+}
+
+```
+
+대부분의 사람들은 super.evaluate()라는 문장이 단순히 부모 클래스의 evaluate()를 호출한다고 생각한다.</br>
+하지만 super.evaluate()에 의해 호출되는 메서드는 부모 클래스의 메서드가 아니라 더 상위에 위치한 조상 클래스의 메서드일 수도 있다.</br>
+
+
+```
+public class FormattedGradeLecture extends GradeLecture {
+    public FormattedGradeLecture(String name, int pass, List<Grade> grades, List<Integer> scores) {
+        super(name, pass, grades, scores);
+    }
+
+    public String formatAverage() {
+        return String.format("Avg: %1.1f", super.average());
+    }
+}
+
+```
+
+사실 super 참조의 용도는 부모 클래스에 정의된 메서드를 실행하기 위한 것이 아니다.</br>
+super 참조의 정확한 의도는 '지금 이 클래스의 부모 클래스에서부터 메서드 탐색 시작하세요' 다.</br>
+=> super 참조를 통해 실행하고자 하는 메서드가 반드시 부모 클래스에 위치하지 않아도 되는 유연성을 제공한다.</br></br>
+
+부모 클래스의 메서드를 호출하는 것과 부모 클래스에서 메서드 탐색을 시작하는 것은 의미가 매우 다르다.</br>
+부모 클래스의 메서드를 호출한다는 것은 그 메서드가 반드시 부모 클래스 안에 정의돼 있어야 한다는 것을 의미한다.</br>
+그에 비해 부모 클래스에서 메서드 탐색을 시작한다는 것은 그 클래스의 조상 어딘가에 그 메서드가 정의돼 있기만 하면 실행할 수 있다는 것을 의미한다.</br>
 
 
 
