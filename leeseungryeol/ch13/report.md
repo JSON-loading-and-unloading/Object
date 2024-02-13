@@ -99,3 +99,83 @@ public class Penguin extends Bird {
 
 따라서 어떤 두 대상을 언어적으로 is-a 라고 표현할 수 있더라도 일단은 상속을 사용할 예비 후보 정도로만 생각하라.</br>
 
+<h3>행동 호환성</h3>
+
+위 내용과 같이 두 타입 사이에 행동이 호환될 경우에만 타입 계층으로 묶어야 한다는 것을 알 수 있다.
+행동의 호환 여부를 판단하는 기준은 클라이언트의 관점이다.
+클라이언트가 두 타입이 동일하게 행동할 것이라고 기대한다면 두 타입을 타입 계층으로 묶을 수 있다.
+
+상속 관계를 유지하면서 문제 해결 방법
+
+1. Penguin의 fly 메서드를 오버라이딩해서 내부 구현을 비워둔다.
+
+```
+public class Penguin extends Bird{
+
+@override
+public void fly(){
+
+}
+
+}
+
+```
+
+=> 어떤 행동도 수행하지 않기 때문에 모든 bird가 날 수 있다는 클라이언트의 기대를 만족시키지 못한다.
+
+
+2. Penguin의 fly 메서드를 오버라이딩한 후 예외를 던진다.
+
+```
+public class Penguin extends Bird{
+
+@override
+public void fly(){
+   throw new UnsupportOperationException();
+}
+
+}
+
+```
+
+=> flyBird 메서드는 fly 메세지를 전송한 결과로  UnsupportOperationException 예외가 던져질 것이라고 기대하지 않을 것이다.
+
+
+3. flyBird 메서드를 수정해서 인자로 전달된 bird의 타입이 Penguin이 아닐 경우에만 fly 메시지를 전송하도록 하는 것이다.
+
+```
+public void flyBird(){
+  if(!bird instanceof Penguin){
+
+    bird.fly();
+}
+
+}
+
+```
+
+=> new 연산자와 마찬가지로 구체적인 클래스에 대한 결합도를 높인다.
+
+
+<h3>클라이언트의 기대에 따라 계층 분리하기</h3>
+
+이를 해결하기 위해 날 수 있는 새와 없는 새로 분리한다.
+
+
+```
+public class Bird{
+
+}
+
+public class FlyingBird extends Bird{
+   public void fly(){}
+}
+
+public class Penguin extends Bird{
+
+
+}
+
+```
+
+이와 같이 FlyingBird 타입의 인스턴스만이 fly 메시지를 수신할 수 있다.
