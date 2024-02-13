@@ -220,4 +220,106 @@ fly 오퍼레이션을 가진 Flyer 인터페이스와 walk 오퍼레이션을 �
 
 자식 클래스가 부모 클래스의 코드를 재사용할 목적으로 상속을 사용했다면 서브 클래싱이고, 부모 클래스의 인스턴스 대신 자식 클래스의 인스턴스를 사용할 목적으로 상속을 사용했다면 서브 타이핑이다.</br></br>
 
+<h2>리스코프 치환 원칙</h2>
+
+리스코프 치환 원칙은 `서브 타입은 그것의 기반 타입에 대해 대체 가능해야 한다는 것으로 클라이언트가 차이점을 인식하지 못한 채 기반 클래스의 인터페이스를 통해 서브 클래스를 사용할 수 있어야 한다는 것이다.`</br>
+
+
+리스코프 치환 원칙에 따르면 자식 클래스가 부모 클래스와 행동 호환성을 유지함으로써 부모 클래스를 대체할 수 있도록 구현된 상속 관계만을 서브타이핑이라고 불러야 한다.</br>
+
+
+```
+public class Rectangle {
+    private int x, y, width, height;
+
+    public Rectangle(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
+
+    public int getX() {
+        return x;
+    }
+
+    public void setX(int x) {
+        this.x = x;
+    }
+
+    public int getY() {
+        return y;
+    }
+
+    public void setY(int y) {
+        this.y = y;
+    }
+
+    public int getWidth() {
+        return width;
+    }
+
+    public void setWidth(int width) {
+        this.width = width;
+    }
+
+    public int getHeight() {
+        return height;
+    }
+
+    public void setHeight(int height) {
+        this.height = height;
+    }
+}
+
+class Square extends Rectangle {
+
+    public Square(int x, int y, int size) {
+        super(x, y, size, size);
+    }
+
+    @Override
+    public void setWidth(int width) {
+        super.setWidth(width);
+        super.setHeight(width);
+    }
+
+    @Override
+    public void setHeight(int height) {
+        super.setHeight(height);
+        super.setWidth(height);
+    }
+}
+
+```
+
+위와 같이 코드가 구현됨.</br>
+
+
+
+```
+public void resize(Rectangle rectangle, int width, int height){
+    rectangle.setWidth(width);
+    rectangle.setHeight(height);
+    assert rectangle.getWidth() == width && rectangle.getHeight() == height;
+}
+
+```
+
+위에 따르면 Square의 너비와 높이는 항상 더 나중에 설정된 height의 값으로 설정된다. 따라서 다음과 같이 width와 height 값이 다르게 설정할 경우 메서드 실행이 실패하고 말 것이다.
+</br>
+
+```
+Square square = new Squere(10, 10, 10);
+resize(square, 50, 100);
+
+```
+
+resize 메서드의 관점에서 Rectangle 대신 Squeare를 사용할 수 없기 때문에 Square는 Rectangle이 아니다.</br>
+
+Square는 Rectangle의 구현을 재사용하고 있을 뿐이다.</br>
+
+두 클래스는 리스코프 치환 원칙을 위반하기 때문에 서브타이핑 관계가 아니라 서브 클래싱 관계다.</br>
+
+
 
