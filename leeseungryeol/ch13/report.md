@@ -328,27 +328,28 @@ Square는 Rectangle의 구현을 재사용하고 있을 뿐이다.</br>
 
 <h3>리스코프 치환 원칙은 유연한 설계의 기반이다.</h3>
 
-8장 DiscountPolicy 상속 계층을 보면 자식 클래스인 OVerlappedDiscountPolicy를 추가하더라도 클라이언트를 수정할 필요는 없었다.
+8장 DiscountPolicy 상속 계층을 보면 자식 클래스인 OVerlappedDiscountPolicy를 추가하더라도 클라이언트를 수정할 필요는 없었다.</br>
 
-이 설계는 의존성 역전 원칙과 개방-폐쇄 원칙, 리스코프 치환 원칙이 어우러져 설계를 확장 가능하게 만든 대표적인 예다.
-
-이미지
+이 설계는 의존성 역전 원칙과 개방-폐쇄 원칙, 리스코프 치환 원칙이 어우러져 설계를 확장 가능하게 만든 대표적인 예다.</br>
 
 
-자식 클래스가 클라이언트의 관점에서 부모 클래스를 대체할 수 있다면 가능 확장을 위해 자식 클래스를 추가하더라도 코드를 수정할 필요가 없어진다.
-따라서 리스코프 치환 원칙은 개방-폐쇄 원칙을 만족하는 설계를 위한 전제 조건이다.
+![KakaoTalk_20240214_120655838](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/71235d48-76ed-459d-b25e-c62b224951f3)
+
+
+자식 클래스가 클라이언트의 관점에서 부모 클래스를 대체할 수 있다면 가능 확장을 위해 자식 클래스를 추가하더라도 코드를 수정할 필요가 없어진다.</br>
+따라서 리스코프 치환 원칙은 개방-폐쇄 원칙을 만족하는 설계를 위한 전제 조건이다.</br>
 
 
 <h2>계약에 의한 설계와 서브타이핑</h2>
 
-클라이언트와 서버 사이의 협력을 의무와 이익으로 구성된 계약의 관점에서 표현하는 것을 계약에 의한 설계라고 부른다.
+클라이언트와 서버 사이의 협력을 의무와 이익으로 구성된 계약의 관점에서 표현하는 것을 계약에 의한 설계라고 부른다.</br>
 
-사전 조건 : 클라이언트가 정상적으로 메서드를 실행하기 위해 만족시켜야하는 조건
-사후 조건 : 메서드가 실행된 후에 서버가 클라이언트에게 보장해야 하는 조건
-클래스 불변식 : 메서드 실행 전과 실행 후에 인스턴스가 만족시켜야 하는 것
+사전 조건 : 클라이언트가 정상적으로 메서드를 실행하기 위해 만족시켜야하는 조건</br>
+사후 조건 : 메서드가 실행된 후에 서버가 클라이언트에게 보장해야 하는 조건</br>
+클래스 불변식 : 메서드 실행 전과 실행 후에 인스턴스가 만족시켜야 하는 것</br></br>
 
 
-리스코프 원칙과 계약에 의한 설계 사이의 관계
+리스코프 원칙과 계약에 의한 설계 사이의 관계</br>
 
  - 서브타입이 리스코프 치환 원칙을 만족시키기 위해서는 클라이언트와 슈퍼타입 간에 체결된 '계약을 준수해야 한다.
 
@@ -424,10 +425,10 @@ public class Movie {
 
 ```
 
-사전 조건 : DiscountPolicy의 calculateDiscountAmount 메서드는 인자로 전달된 screening이 null인지 여부를 확인하지 않는다. 하지만 screening에 null이 전달된다면 screening.getMovieFee()가 실행될 때 NullPointerException 예외가 던져질 것이다.
+사전 조건 : DiscountPolicy의 calculateDiscountAmount 메서드는 인자로 전달된 screening이 null인지 여부를 확인하지 않는다. 하지만 screening에 null이 전달된다면 screening.getMovieFee()가 실행될 때 NullPointerException 예외가 던져질 것이다.</br></br>
 
-Screening에 null이 전달되는 것은 우리가 기대했던 것이 아니다.
-따라서 단정문을 사용해 사전 조건을 다음과 같이 표현한다.
+Screening에 null이 전달되는 것은 우리가 기대했던 것이 아니다.</br>
+따라서 단정문을 사용해 사전 조건을 다음과 같이 표현한다.</br>
 
 ```
 assert screening != null && screening.getStartTime().isAfter(LocalDateTime.now());
@@ -435,22 +436,64 @@ assert screening != null && screening.getStartTime().isAfter(LocalDateTime.now()
 ```
 
 
-Movie의 calculateMovieFee 메서드를 보면 DiscountPolicy의 calculateDiscountAmount 메서드의 반환값에 어떤 처리도 하지 않고 fee에서 차감하고 있다.
-따라서 calculateDiscountAmount 메서드의 반환값은 항상 null이 아니어야 한다.
+Movie의 calculateMovieFee 메서드를 보면 DiscountPolicy의 calculateDiscountAmount 메서드의 반환값에 어떤 처리도 하지 않고 fee에서 차감하고 있다.</br>
+따라서 calculateDiscountAmount 메서드의 반환값은 항상 null이 아니어야 한다.</br></br>
 
-추가로 반환되는 값은 청구되는 요금이기 때문에 최소 0원보다는 커야한다.
+추가로 반환되는 값은 청구되는 요금이기 때문에 최소 0원보다는 커야한다.</br>
 
-사후 조건은
+사후 조건은</br>
 
 ```
 assert amount != null && amount.isGreaterThanOrEqual(Money.ZERO);
 
 ```
 
-DiscountPolicy 자식 클래스들은 DiscountPolicy의 calculateDiscountAmount메서드를 그대로 상속받기 때문에 계약을 변경하지 않는다.
-따라서 Movie의 입장에서 이 클래스들은 DiscountPolicy를 대체할 수 있기 때문에 서브타이핑 관계라고 할 수 있다.
+DiscountPolicy 자식 클래스들은 DiscountPolicy의 calculateDiscountAmount메서드를 그대로 상속받기 때문에 계약을 변경하지 않는다.</br>
+따라서 Movie의 입장에서 이 클래스들은 DiscountPolicy를 대체할 수 있기 때문에 서브타이핑 관계라고 할 수 있다.</br>
 
 
+<h3>서브타입과 계약</h3>
 
+자식 클래스가 부모 클래스의 메서드를 오버라이딩 할 수 있다.</br>
+
+```
+public class BrokenDiscountPolicy extends DiscountPolicy {
+
+    public BrokenDiscountPolicy(DiscountCondition... conditions) {
+        super(conditions);
+    }
+
+    @Override
+    public Money calculateDiscountAmount(Screening screening) {
+        checkPrecondition(screening);                 // 기존의 사전조건
+        checkStrongerPrecondition(screening);         // 더 강력한 사전조건
+
+        Money amount = screening.getMovieFee();
+        checkPostcondition(amount);                   // 기존의 사후조건
+        checkStrongerPostcondition(amount);           // 더 강력한 사후조건
+        return amount;
+    }
+
+    private void checkStrongerPrecondition(Screening screening) {
+        assert screening.getEndTime().toLocalTime()
+                .isBefore(LocalTime.MIDNIGHT);
+    }
+
+    private void checkStrongerPostcondition(Money amount) {
+        assert amount.isGreaterThanOrEqual(Money.wons(1000));
+    }
+
+    @Override
+    protected Money getDiscountAmount(Screening screening) {
+        return Money.ZERO;
+    }
+}
+
+```
+
+오버라이딩을 통해 강한 사후, 사전 조건이 추가되면 서브 타입의 조건이 깨지고 만다.</br></br>
+
+계약에 의한 설계는 클라이언트 관점에서의 대체 가능성을 계약으로 설명할 수 있다는 사실을 잘 보여준다.</br>
+따라서, 서브타이핑을 위해 상속을 사용하고 있다면 부모 클래스가 클라이언트와 맺고 있는 계약에 관해 깊이 고민해봐야한다.</br>
 
 
