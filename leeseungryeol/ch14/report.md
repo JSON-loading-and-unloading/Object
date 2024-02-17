@@ -175,4 +175,123 @@ Call의 splitByDay 메서드는 DateTimeInterval에 요청을 전달한 후 응�
 DateTimeInterval 클래스의 splitByDay메서드는 통화 기간을 일자별로 분할해서 반환.</br>
 days 메서드는 from과 to 사이에 포함된 날짜 수를 반환</br>    
 
+<h3>요일별 방식 구현하기</h3>
 
+```
+public class DayOfWeekDiscountRule {
+    private List<DayOfWeek> dayOfWeeks = new ArrayList<>();
+    private Duration duration = Duration.ZERO;
+    private Money amount = Money.ZERO;
+
+    public DayOfWeekDiscountRule(List<DayOfWeek> dayOfWeeks,
+                                 Duration duration, Money  amount) {
+        this.dayOfWeeks = dayOfWeeks;
+        this.duration = duration;
+        this.amount = amount;
+    }
+
+    public Money calculate(DateTimeInterval interval) {
+        if (dayOfWeeks.contains(interval.getFrom().getDayOfWeek())) {
+            return amount.times(interval.duration().getSeconds() / duration.getSeconds());
+        }
+
+        return Money.ZERO;
+    }
+}
+
+```
+
+요일별 방식을 개발 규칙은 DayOfWeekDiscountRule이라는 하나의 클래스를 구현하는 것이 더 나은 설계라고 판단됐다고 한다.</br>
+DayOfWeekDiscountWeek 클래스는 규칙을 정의하기 위해 필요한 요일의 목록, 단위시간, 단위 요금을 인스턴스 변수로 포함한다.</br>
+calculate 메서드는 파라미터로 전달된 interval이 요일 조건을 만족시킬 경우 단위 시간과 단위 요금을 이용해 통화 요금을 계산한다.</br>
+
+ - 시간대별 방식과 동일하게 통화 기간을 날짜 경계로 분리하고 분리된 각 통화 기간을 요일별로 설정된 요금 정책에 따라 적절하게 계산해야 한다.
+
+```
+public class DayOfWeekDiscountPolicy extends BasicRatePolicy {
+    private List<DayOfWeekDiscountRule> rules = new ArrayList<>();
+
+    public DayOfWeekDiscountPolicy(List<DayOfWeekDiscountRule> rules) {
+        this.rules = rules;
+    }
+
+    @Override
+    protected Money calculateCallFee(Call call) {
+        Money result = Money.ZERO;
+        for(DateTimeInterval interval : call.getInterval().splitByDay()) {
+            for(DayOfWeekDiscountRule rule: rules) { result.plus(rule.calculate(interval));
+            }
+        }
+        return result;
+    }
+}
+
+```
+
+
+<h3>구간별 방식 구현하기</h3>
+
+지금까지 구현 방식은 일관성이 맞지 않는다.</br></br>
+
+시간대별 방식 : TimeOfDayDiscountPolicy는 규칙을 구성하는 시작 일자와 종료 일자, 단위 시간, 단위 요금 각각을 별도의 List로 관리한다.</br>
+요일별   방식 : DayOfWeekDiscountPolicy는 DayOfWeekDiscountRule이라는 별도의 클래스를 사용했다.</br>
+고정요금 방식 : 하나의 규칙만으로 구성 돼있다.</br></br>
+
+이 상태에서 새로운 기본 정책을 추가하면 추가할수록 코드 사이의 일관성은 점점 더 어긋나게 된다.</br>
+일관성 없는 코드가 가지는 두 번째 문제점은 코드를 이해하기 어렵다.</br>
+=> 유사한 기능은 유사한 방식으로 구현해야 한다.</br>
+
+```
+public class DurationDiscountRule extends FixedFeePolicy {
+    private Duration from;
+    private Duration to;
+
+    public DurationDiscountRule(Duration from, Duration to, Money amount, Duration seconds) {
+        super(amount, seconds);
+        this.from = from;
+        this.to = to;
+    }
+
+    public Money calculate(Call call) {
+        if (call.getDuration().compareTo(to) > 0) {
+            return Money.ZERO;
+        }
+
+        if (call.getDuration().compareTo(from) < 0) {
+            return Money.ZERO;
+        }
+
+        // 부모 클래스의 calculateFee(phone)은 Phone 클래스를 파라미터로 받는다.
+        // calculateFee(phone)을 재사용하기 위해 데이터를 전달할 용도로 임시 Phone을 만든다.
+        Phone phone = new Phone(null);
+        phone.call(new Call(call.getFrom().plus(from),
+                            call.getDuration().compareTo(to) > 0 ? call.getFrom().plus(to) : call.getTo()));
+
+        return super.calculateFee(phone);
+    }
+}
+
+```
+
+```
+public class DurationDiscountPolicy extends BasicRatePolicy {
+    private List<DurationDiscountRule> rules = new ArrayList<>();
+
+    public DurationDiscountPolicy(List<DurationDiscountRule> rules) {
+        this.rules = rules;
+    }
+
+    @Override
+    protected Money calculateCallFee(Call call) {
+        Money result = Money.ZERO;
+        for(DurationDiscountRule rule: rules) {
+            result.plus(rule.calculate(call));
+        }
+        return result;
+    }
+}
+
+```
+
+요일별 방식처럼 규칙을 정의하는 새로운 클래스를 추가한다.</br>
+요일별 방식과 다른 점은 코드를 재사용하기 위해 FixedFeepolicy 클래스를 상속한다.</br>
