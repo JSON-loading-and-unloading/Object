@@ -295,3 +295,115 @@ public class DurationDiscountPolicy extends BasicRatePolicy {
 
 요일별 방식처럼 규칙을 정의하는 새로운 클래스를 추가한다.</br>
 요일별 방식과 다른 점은 코드를 재사용하기 위해 FixedFeepolicy 클래스를 상속한다.</br>
+
+
+<h2>설계에 일관성 부여하기</h2>
+
+일관성 있는 설계를 만드는데 훌륭한 조건~~</br></br>
+
+1. 다양한 설계 경험을 익히자</br>
+2. 널리 알려진 디자인 패턴을 학습하고 변경이라는 문맥 안에서 디자인 패턴을 적용해보자</br>
+
+
+협력을 일관성 있게 만들기 위한 지침</br>
+ - 변하는 개념을 변하지 않는 개념으로부터 분리하라.</br>
+ - 변하는 개념을 캡슐화하라.</br>
+
+<h3>조건 로직 대 객체 탐색</h3>
+
+```
+public class ReservationAgency {
+    public Reservation reserve(Screening screening, Customer customer,
+                               int audienceCount) {
+        Movie movie = screening.getMovie();
+
+        boolean discountable = false;
+        for(DiscountCondition condition : movie.getDiscountConditions()) {
+            if (condition.getType() == DiscountConditionType.PERIOD) {
+                discountable = screening.getWhenScreened().getDayOfWeek().equals(condition.getDayOfWeek()) &&
+                        condition.getStartTime().compareTo(screening.getWhenScreened().toLocalTime()) <= 0 &&
+                        condition.getEndTime().compareTo(screening.getWhenScreened().toLocalTime()) >= 0;
+            } else {
+                discountable = condition.getSequence() == screening.getSequence();
+            }
+
+            if (discountable) {
+                break;
+            }
+        }
+
+        Money fee;
+        if (discountable) {
+            Money discountAmount = Money.ZERO;
+            switch(movie.getMovieType()) {
+                case AMOUNT_DISCOUNT:
+                    discountAmount = movie.getDiscountAmount();
+                    break;
+                case PERCENT_DISCOUNT:
+                    discountAmount = movie.getFee().times(movie.getDiscountPercent());
+                    break;
+                case NONE_DISCOUNT:
+                    discountAmount = Money.ZERO;
+                    break;
+            }
+
+            fee = movie.getFee().minus(discountAmount).times(audienceCount);
+        } else {
+            fee = movie.getFee().times(audienceCount);
+        }
+
+        return new Reservation(customer, screening, fee, audienceCount);
+    }
+}
+
+```
+
+하나는 할인 조건의 종류를 결정하는 부분이고 다른 하난는 할인 정책을 결정하는 부분이다.</br>
+이 설계가 나쁜 이유는 변경의 주기가 서로 다른 코드가 한 클래스 안에 뭉쳐져 있다.</br></br>
+
+
+하지만 DiscountPolicy와 DiscountCondition을 이미지를 보면</br>
+Movie는 DiscountPolicy로 향하는 참조를 통해 메시지를 전달할 뿐이다.</br></br>
+
+위와 같이 조건 로직을 객체 사이의 이동으로 대체하기 위해서는 커다란 클래스를 더 작은 클래스들로 분리해야 한다.</br>
+클래스를 분리하기 위해 어떤 기준을 따르면 좋을까??</br>
+기준은 변경의 이유와 주기다.</br>
+클래스는 명확히 단 하나의 이유에 의해서만 변경돼야 하고 클래스 안의 모든 코드는 함께 변경돼야 한다.(단일 책임 원칙)</br></br>
+
+큰 메서드 안에 뭉쳐있던 조건 로직들을 변경의 압력에 맞춰 작은 클래스들로 분리하고 나면 인스턴스들 사이의 협력 패턴에 일관성을 부여하기가 더 쉬워진다.</br>
+유사한 행동을 수행하는 작은 클래스들이 자연스럽게 역할이라는 추상화로 묶이게 되고 역할 사이에서 이뤄지는 협력 방식이 전체 설계의 일관성을 유지할 수 있게 이끌어준다.</br>
+
+일관성 있는 렵력을 위한 지침</br></br> 
+
+1. 변하는 개념을 변하지 않는 개념으로부터 분리하라.
+2. 변하는 개념을 캡슐화하라.
+
+
+1 => 할인 정책과 할인 조건의 타입을 체크하는 하나하나의 조건문이 개별적인 변경이었다는 점에서 각 조건문을 개별적인 객체로 분리했고 이 객체들과 일관성 있게 협력하기 위해 타입 계층을 구성했다.</br>
+
+2 => 추상 클래스인 DiscountPolicy를 부모로 삼아 상속 계층을 구성한 이유가 바로 Movie로부터 구체적인 할인 정책들을 캡슐화하기 위해서다.</br>
+    실행 시점에 Movie는 자신과 협력하는 객체의 구체적인 타입에 대해 알지 못한다.</br>
+
+<h3>캡슐화 다시 살펴보기</h3>
+
+캡슐화란 단순히 데이터를 감추는 것이 아니다. 소프트웨어 안에서 변할 수 있는 모든 '개념'을 감추는 것이다.</br></br>
+
+캡슐화의 가장 대표적인 예는 객체의 퍼블릭 인터페이스와 구현을 분리하는 것이다.</br>
+
+이미지
+
+
+데이터 캡슐화 : Movie 클래스의 인스턴스 변수 title 가시성은 private이기 때문에 외부에서 접근할 수 없다.</br>
+메서드 캡슐화 : DiscountPolicy 클래스에서 정의돼 있는 getDiscountAmount 메서드의 가시성은 protect다. 클래스의 외부에서는 이 메서드에 직접 접근할 수 없고 클래스 내부와 서브클래스에서만 접근이 가능하다.</br>
+객체 캡슐화   : Movie 클래스는 DiscountPolicy 타입의 인스턴스 변수 discountPolicy를 포함한다. 이 인스턴스 변수는 private 가시성을 가지기 때문에 Movie와 DiscountPolicy 사이의 관계를 변경하더라도 외부에서 영향을 미치지 않는다.</br>
+
+서브타입 캡슐화 : Movie는 DiscountPolicy에 대해서는 알고 있지만 AmountDiscountPolicy와 PercentDiscountPolicy에 대해서는 알지 못한다. 그러나 실제로 실행 시점에는 이 클래스들의 인스턴스와 협력할 수 있다. 이것은 기반 클래스인 DiscountPolicy와의 추상적인 관계가 AmountDiscountPolicy와 PercentDiscountPolicy의 존재를 감추고 있기 때문이다.</br>
+
+서브타입 캡슐화와 객체 캡슐화를 적용하는 방법</br>
+
+
+1. 변하는 부분을 분리해서 타입 계층을 만든다. </br>
+ - 변하지 않는 부분으로부터 변하는 부분을 분리. 변하는 부분들의 공통적인 행동을 추상 클래스나 인터페이스로 추상화한 후 변하는 부분들이 이 추상 클래스나 인터페이스를 상속받게 만든다.</br>
+
+2. 변하지 않는 부분의 일부로 타입 계층을 합성한다.</br>
+   - 앞에서 구현한 타입 계층을 변하지 않는 부분에 합성한다. 변하지 않는 부분에서는 변경되는 구체적인 사항에 결합돼서는 안된다. 의존성 주입과 같이 결합도를 느슨하게 유지할 수 있는 방법을 이용해 오직 추상화에만 의존하게 만든다.</br>
