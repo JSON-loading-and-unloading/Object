@@ -361,6 +361,7 @@ public class ReservationAgency {
 하나는 할인 조건의 종류를 결정하는 부분이고 다른 하난는 할인 정책을 결정하는 부분이다.</br>
 이 설계가 나쁜 이유는 변경의 주기가 서로 다른 코드가 한 클래스 안에 뭉쳐져 있다.</br></br>
 
+![KakaoTalk_20240217_164059492_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/ea3f2f0b-ede0-491e-8dfc-e399635b3590)
 
 하지만 DiscountPolicy와 DiscountCondition을 이미지를 보면</br>
 Movie는 DiscountPolicy로 향하는 참조를 통해 메시지를 전달할 뿐이다.</br></br>
@@ -390,7 +391,7 @@ Movie는 DiscountPolicy로 향하는 참조를 통해 메시지를 전달할 뿐
 
 캡슐화의 가장 대표적인 예는 객체의 퍼블릭 인터페이스와 구현을 분리하는 것이다.</br>
 
-이미지
+![KakaoTalk_20240217_164059492](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/551b3afb-321b-4e24-b7cd-16799233154e)
 
 
 데이터 캡슐화 : Movie 클래스의 인스턴스 변수 title 가시성은 private이기 때문에 외부에서 접근할 수 없다.</br>
