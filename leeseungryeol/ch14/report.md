@@ -430,7 +430,8 @@ Movie는 DiscountPolicy로 향하는 참조를 통해 메시지를 전달할 뿐
 여기서 변하지 않는 것은 규칙이고 변하는 것은 적용 조건이다.</br>
 따라서 규칙으로부터 적용조건을 분리해서 추상화한 후 시간대별, 요일별, 구간별 방식을 이 추상화의 서브타입으로 만든다.</br>
 
-이미지
+
+![KakaoTalk_20240218_152836624_01](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/e57f54d5-0604-4498-8c6a-bcfd0be77da7)
 
 FeeRule이 FeeCondition을 합성 관계로 연결하고 있다.</br>
 FeeRule의 인스턴스 변수인 feePerDuration에 저장돼 있다.</br>
@@ -441,7 +442,8 @@ FeeRule은 추상화인 FeeCondtion에 대해서만 의존하기 때문이 적�
 
 <h3>협력 패턴 설계하기</h3>
 
-이미지
+
+![KakaoTalk_20240218_152836624_02](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/ca8238c6-0bbb-4e72-9fad-c8cd844c5f74)
 
 1. BasicRatePolicy의 calculateFee 메서드는 인자로 전달받은 통화 목록의 전체 요금을 계산
 2. BasicRatePolicy는 목록에 포함된 각 Call별로 FeeRule의 calculateFee메서드를 실행
@@ -451,8 +453,9 @@ FeeRule은 추상화인 FeeCondtion에 대해서만 의존하기 때문이 적�
 1. 전체 통화 시간을 각 규칙의 적용조건을 만족하는 구간들로 나누는 것
 2. 분리된 통화 구간에 단위요금을 적용해서 요금을 계산하는 것
 
+![KakaoTalk_20240218_152836624](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/d0365f8a-ce81-4b70-a8a8-08238913dd2b)
 
-이미지
+
 
 FeeRule은 FeeCondtion의 인스턴스에게 findTimeIntervals 메시지를 전송한다.</br>
 findTimeIntervals는 통화 기간 중에서 적용조건을 만족하는 구간을 가지는 DateTimeIntervals의 List를 반환한다.</br>
