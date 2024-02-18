@@ -408,3 +408,134 @@ Movie는 DiscountPolicy로 향하는 참조를 통해 메시지를 전달할 뿐
 
 2. 변하지 않는 부분의 일부로 타입 계층을 합성한다.</br>
    - 앞에서 구현한 타입 계층을 변하지 않는 부분에 합성한다. 변하지 않는 부분에서는 변경되는 구체적인 사항에 결합돼서는 안된다. 의존성 주입과 같이 결합도를 느슨하게 유지할 수 있는 방법을 이용해 오직 추상화에만 의존하게 만든다.</br>
+
+
+
+<h2>일관성 있는 기본 정책 구현하기</h2>
+
+<h3>변경 분리하기</h3>
+
+단위 요금은 말 그대로 단위시간당 요금 정보를 의미한다. 적용조건은 통화 요금을 계산하는 조건을 의미한다.</br></br>
+
+단위 요금과 적용 조건이 모여 하나의 규칙을 구성한다.</br></br>
+
+시간대별, 요일별, 구간별 방식의 차이점은 각 기본 정책별로 요금을 계산하는 '적용조건'의 형식이 다르다는 것이다.</br>
+모든 규칙에 '적용 조건'이 포함된다는 사실은 변하지 않지만 실제 조건의 세부적인 내용은 다르다.</br>
+
+변하지 않는 것과 변하는 것을 분리하라</br>
+=> 변하지 않는 규칙으로부터 변하는 '적용 조건'을 분리해야 한다.</br>
+
+<h3>변경 캡슐화하기</h3>
+
+여기서 변하지 않는 것은 규칙이고 변하는 것은 적용 조건이다.</br>
+따라서 규칙으로부터 적용조건을 분리해서 추상화한 후 시간대별, 요일별, 구간별 방식을 이 추상화의 서브타입으로 만든다.</br>
+
+이미지
+
+FeeRule이 FeeCondition을 합성 관계로 연결하고 있다.</br>
+FeeRule의 인스턴스 변수인 feePerDuration에 저장돼 있다.</br>
+FeeCondtion은 적용조건을 구현하는 인터페이스이며 변하는 부분을 캡슐화하는 추상화다.</br>
+TimeOfDayFeeCondition은 시간대별 방식, DayOfWeekFeeCondition은 요일별 방식, DurationFeeCondition은 구간별 방식이다.</br></br>
+
+FeeRule은 추상화인 FeeCondtion에 대해서만 의존하기 때문이 적용조건이 변하더라도 영향을 받지 않는다. 즉, 적용조건이라는 변경에 대해 캡슐화돼 있다.</br>
+
+<h3>협력 패턴 설계하기</h3>
+
+이미지
+
+1. BasicRatePolicy의 calculateFee 메서드는 인자로 전달받은 통화 목록의 전체 요금을 계산
+2. BasicRatePolicy는 목록에 포함된 각 Call별로 FeeRule의 calculateFee메서드를 실행
+3. FeeRule은 하나의 Call에 대해 요금을 계산하는 책임을 수행( FeeRule은 단위 시간당 요금인 feePerDuration과 요금을 적용할 조건을 판단하는 적용조건인 FeeCondition의 인스턴스를 알고 있다.)
+
+하나의 Call 요금을 계산하기 위해서는 두 개의 작업이 필요하다.</br>
+1. 전체 통화 시간을 각 규칙의 적용조건을 만족하는 구간들로 나누는 것
+2. 분리된 통화 구간에 단위요금을 적용해서 요금을 계산하는 것
+
+
+이미지
+
+FeeRule은 FeeCondtion의 인스턴스에게 findTimeIntervals 메시지를 전송한다.</br>
+findTimeIntervals는 통화 기간 중에서 적용조건을 만족하는 구간을 가지는 DateTimeIntervals의 List를 반환한다.</br>
+FeeRule은 feePerDuration 정보를 이용해 반환받은 기간 만큼의 통화 요금을 계산한 후 반환한다.</br></br>
+
+
+<h3>추상화 수준에서 협력 패턴 구현하기</h3>
+
+```
+public interface FeeCondition {
+    List<DateTimeInterval> findTimeIntervals(Call call);
+}
+
+```
+
+
+```
+public class FeeRule {
+    private FeeCondition feeCondition;
+    private FeePerDuration feePerDuration;
+
+    public FeeRule(FeeCondition feeCondition, FeePerDuration feePerDuration) {
+        this.feeCondition = feeCondition;
+        this.feePerDuration = feePerDuration;
+    }
+
+    public Money calculateFee(Call call) {
+        return feeCondition.findTimeIntervals(call)
+                .stream()
+                .map(each -> feePerDuration.calculate(each))
+                .reduce(Money.ZERO, (first, second) -> first.plus(second));
+    }
+}
+
+```
+
+FeeRule의 calculateFee메서드는 FeeCondition에게 findTimeIntervals 메시지를 전송해서 조건을 만족하는 시간의 목록을 반환받은 후 feePerDuration의 값을 이용해 요금을 계산한다.</br>
+
+```
+public class FeePerDuration {
+    private Money fee;
+    private Duration duration;
+
+    public FeePerDuration(Money fee, Duration duration) {
+        this.fee = fee;
+        this.duration = duration;
+    }
+
+    public Money calculate(DateTimeInterval interval) {
+        return fee.times(Math.ceil((double)interval.duration().toNanos() / duration.toNanos()));
+    }
+}
+
+```
+
+FeePerDuration클래스는 단위 시간당 요금이라는 개념을 표현하고 이 정보를 이용해 일정 기간 동안의 요금을 계산하는 calculate 메서드를 구현</br>
+
+
+
+```
+public final class BasicRatePolicy implements RatePolicy {
+    private List<FeeRule> feeRules = new ArrayList<>();
+
+    public BasicRatePolicy(FeeRule ... feeRules) {
+        this.feeRules = Arrays.asList(feeRules);
+    }
+
+    @Override
+    public Money calculateFee(Phone phone) {
+        return phone.getCalls()
+                .stream()
+                .map(call -> calculate(call))
+                .reduce(Money.ZERO, (first, second) -> first.plus(second));
+    }
+
+    private Money calculate(Call call) {
+        return feeRules
+                .stream()
+                .map(rule -> rule.calculateFee(call))
+                .reduce(Money.ZERO, (first, second) -> first.plus(second));
+    }
+}
+
+```
+
+BasicRatePolicy가 FeeRule의 컬렉션을 이용해 전체 통화 요금을 계산하도록 수정할 수 있다.</br>
