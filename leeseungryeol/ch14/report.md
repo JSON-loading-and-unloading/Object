@@ -542,3 +542,120 @@ public final class BasicRatePolicy implements RatePolicy {
 ```
 
 BasicRatePolicy가 FeeRule의 컬렉션을 이용해 전체 통화 요금을 계산하도록 수정할 수 있다.</br>
+
+<h3>구체적인 협력 구현하기</h3>
+
+
+
+<h4>시간대별 정책</h4>
+
+```
+public class TimeOfDayFeeCondition implements FeeCondition {
+    private LocalTime from;
+    private LocalTime to;
+
+    public TimeOfDayFeeCondition(LocalTime from, LocalTime to) {
+        this.from = from;
+        this.to = to;
+    }
+
+    @Override
+    public List<DateTimeInterval> findTimeIntervals(Call call) {
+        return call.getInterval().splitByDay()
+                .stream()
+                .filter(each -> from(each).isBefore(to(each)))
+                .map(each -> DateTimeInterval.of(
+                                LocalDateTime.of(each.getFrom().toLocalDate(), from(each)),
+                                LocalDateTime.of(each.getTo().toLocalDate(), to(each))))
+                .collect(Collectors.toList());
+    }
+
+    private LocalTime from(DateTimeInterval interval) {
+        return interval.getFrom().toLocalTime().isBefore(from) ?
+                from : interval.getFrom().toLocalTime();
+    }
+
+    private LocalTime to(DateTimeInterval interval) {
+        return interval.getTo().toLocalTime().isAfter(to) ?
+                to : interval.getTo().toLocalTime();
+    }
+}
+
+```
+
+findTimeIntervals 메서드는 인자로 전달된 Call의 통화 기간 중에서 TimeOfDayFeeCondition의 from과 to사이에 포함되는 시간 구간을 반환</br>
+
+
+<h4>요일별 정책</h4>
+
+```
+public class DayOfWeekFeeCondition implements FeeCondition {
+    private List<DayOfWeek> dayOfWeeks = new ArrayList<>();
+
+    public DayOfWeekFeeCondition(DayOfWeek ... dayOfWeeks) {
+        this.dayOfWeeks = Arrays.asList(dayOfWeeks);
+    }
+
+    @Override
+    public List<DateTimeInterval> findTimeIntervals(Call call) {
+        return call.getInterval()
+                .splitByDay()
+                .stream()
+                .filter(each ->
+                        dayOfWeeks.contains(each.getFrom().getDayOfWeek()))
+                .collect(Collectors.toList());
+    }
+}
+
+```
+
+여러 요일을 하나의 단위로 관리할 수 있도록 DayOfWeek의 컬랙션을 인스턴스 변수로 포함.</br>
+findTimeIntervals 메서드는 Call의 기간 중에서 요일에 해당하는 기간만을 추출해 반환.</br>
+
+<h4>구간별 정책</h4>
+
+```
+public class DurationFeeCondition implements FeeCondition {
+    private Duration from;
+    private Duration to;
+
+    public DurationFeeCondition(Duration from, Duration to) {
+        this.from = from;
+        this.to = to;
+    }
+
+    @Override
+    public List<DateTimeInterval> findTimeIntervals(Call call) {
+        if (call.getInterval().duration().compareTo(from) < 0) {
+            return Collections.emptyList();
+        }
+
+        return Arrays.asList(DateTimeInterval.of(
+                call.getInterval().getFrom().plus(from),
+                call.getInterval().duration().compareTo(to) > 0 ?
+                        call.getInterval().getFrom().plus(to) :
+                        call.getInterval().getTo()));
+    }
+}
+
+```
+
+DurationFeeCondition 클래스를 추가한 후 findTimeIntervals 메서드를 오버라이딩.</br>
+
+
+<h4>고정 정책</h4>
+
+```
+public class FixedFeeCondition implements FeeCondition {
+    @Override
+    public List<DateTimeInterval> findTimeIntervals(Call call) {
+        return Arrays.asList(call.getInterval());
+    }
+}
+
+```
+
+인자로 전달된 Call의 전체 통화 기간을 반환</br>
+
+![KakaoTalk_20240219_162441690](https://github.com/JSON-loading-and-unloading/Object-Study/assets/106163272/fae2f33e-43ed-446c-a2aa-1a0a3cdb71d8)
+
